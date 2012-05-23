@@ -1,3 +1,12 @@
+/* test level reading execution
+*
+* change location array to string of the file you want to read
+* gcc `pkg-config --cflags --libs gstreamer-1.0` level-reading-test.c -o level-reading-test
+* time ./level-reading-test > log.log
+* this will measure time spent for reading this file
+* 
+*/
+
 #include <stdio.h>
 #include <gst/gst.h>
 #include <stdbool.h>

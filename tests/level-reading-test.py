@@ -1,3 +1,7 @@
+# test level reading execution using Python/GObject/GI
+# set location property of filesrc element to file you want to read
+# time python level-reading-test.py > log.log
+# This will measure time spent to read this file's levels
 #!/usr/bin/python
 
 from gi.repository import Gst, Gtk
