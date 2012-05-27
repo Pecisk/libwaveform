@@ -17,7 +17,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 {
 	switch(GST_MESSAGE_TYPE(msg)) {
 		case GST_MESSAGE_EOS: {
-			//g_message("Dziesmas beigas.");
+			//g_message("End of the song.");
 			g_main_loop_quit(loop);
 			break;
 		}

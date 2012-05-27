@@ -7,14 +7,11 @@
 #define __WAVEFORM_LEVEL_READING_H__
 
 #include <glib-object.h>
-/*
- * Potentially, include other headers on which this header depends.
- */
 
 /*
  * Type macros.
  */
-#define WAVEFORM_TYPE_LEVEL_READING     (maman_bar_get_type ())
+#define WAVEFORM_TYPE_LEVEL_READING     (waveform_level_reading_get_type ())
 #define WAVEFORM_LEVEL_READING(obj)     (G_TYPE_CHECK_INSTANCE_CAST ((obj), WAVEFORM_TYPE_LEVEL_READING, WaveformLevelReading))
 #define WAVEFORM_IS_LEVEL_READING(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WAVEFORM_TYPE_LEVEL_READING))
 #define WAVEFORM_LEVEL_READING_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), WAVEFORM_TYPE_LEVEL_READING, WaveformLevelReadingClass))
@@ -27,13 +24,13 @@ typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 struct _WaveformLevelReading
 {
   GObject parent_instance;
-
   /* instance members */
   guint64 start_time;
   guint64 end_time;
   guint64 number_of_samples;
-  gint channels;
-  gfloat **levels; /* levels[channel][sample] */
+  gint number_of_channels;
+  /* levels[channel][sample] */
+  gfloat **levels;
 };
 
 struct _WaveformLevelReadingClass
