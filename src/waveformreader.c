@@ -12,6 +12,7 @@ G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 
 static GMainLoop *loop;
 WaveformLevelReading *reading;
+GList *readings;
 
 gunit number_of_channels = 0;
 guint64 number_of_samples = 0;
@@ -35,6 +36,9 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 			// if it's level, add one sample
 			number_of_samples++;
+
+			// creating new WaveformLevelReading
+			reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL)
 			
 			// get value list of channel median powers
 			const GValue *list_value = gst_structure_get_value(st, "rms");
@@ -48,29 +52,44 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// FIXME what about if channels is 0 according to messages? Break and issue error
 			if(channels_global == 0)
 				channels_global = channels;
+
+			// FIXME set reading->time here
+			
+			// Initialise GArray for storing levels for each channel
+			// reading->levels should be already initialised with creation of WaveformLevelReading
+			reading->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
 			
 			int i;
 			for(i=0;i<channels;i++) {
+				// get value from structure field 'rms' array
 				rms_value = g_value_array_get_nth(rms_list, i);
-				//printf("RMS #%i: %f\n", i+1, g_value_get_double(rms_value));
+				// add rms value to levels array
+				g_array_append_val(levels, g_value_get_double(rms_value));
 			}
+
+			// When finished with reading, append it to linked list
+			g_list_append (readings, reading);
+			// FIXME free reading and levels as we don't need them anymore?
+			
 		}
 		default:
 			break;
 	}
 }
 
-WaveformLevelReading * read_levels(gchar *file_location) {
+GList * read_levels(gchar *file_location) {
 	
 	// Create main loop
 	loop = g_main_loop_new(NULL, FALSE);
 
-	// Create new WaveformLevelReading
-	reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
+	// Initialising GArray for returning readings
+	//readings = g_array_new (FALSE, FALSE, sizeof (WaveformLevelReading));
+
+	// Initialising GList for returning readings
+	readings = NULL;
 	
 	GstElement *pipeline;
 	GstBus *bus;
-	
 	
 	pipeline = gst_parse_launch("filesrc name=src ! decodebin ! audioconvert ! level message=true name=level_element ! fakesink", NULL);
 	//pipeline = gst_element_factory_make("playbin", "player");
@@ -91,10 +110,8 @@ WaveformLevelReading * read_levels(gchar *file_location) {
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 	
 	gst_object_unref(GST_OBJECT(pipeline));
-	
-	// prepare reading for return
-	reading->number_of_channels = number_of_channels;
-	reading->number_of_samples = number_of_samples;
-	return reading;
+
+	// return pointer to linked list
+	return readings;
 }
 

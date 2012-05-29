@@ -25,12 +25,8 @@ struct _WaveformLevelReading
 {
   GObject parent_instance;
   /* instance members */
-  guint64 start_time;
-  guint64 end_time;
-  guint64 number_of_samples;
-  gint number_of_channels;
-  /* levels[channel][sample] */
-  gfloat **levels;
+  guint64 time;
+  GArray *levels;
 };
 
 struct _WaveformLevelReadingClass
