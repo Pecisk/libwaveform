@@ -44,7 +44,7 @@ GType waveform_reader_get_type (void);
 /*
  * Method definitions.
  */
-WaveformLevelReading *	waveform_reader_get_levels(gchar *file_location);
+WaveformLevelReading *	waveform_reader_get_levels(WaveformReader *reader, gchar *file_location);
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
 WaveformReader * waveform_reader_new(void);
 
