@@ -7,70 +7,46 @@
 
 G_DEFINE_TYPE (WaveformLevelReading, waveform_level_reading, G_TYPE_OBJECT);
 
-waveform_level_reading_init (WaveformLevelReading *self)
+static void
+waveform_level_reading_class_init (WaveformLevelReadingClass *klass)
 {
-  self->priv = MAMAN_BAR_GET_PRIVATE (self); 
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  /* initialize all public and private members to reasonable default values. */
+  gobject_class->dispose = waveform_level_reading_dispose;
+  gobject_class->finalize = waveform_level_reading_finalize;
 
-  /* If you need specific construction properties to complete initialization,
-   * delay initialization completion until the property is set. 
-   */
+  //g_type_class_add_private (klass, sizeof (MamanBarPrivate));
 }
 
 static void
-maman_bar_dispose (GObject *gobject)
+waveform_level_reading_init (WaveformLevelReading *self)
 {
-  MamanBar *self = MAMAN_BAR (gobject);
+  //self->priv = MAMAN_BAR_GET_PRIVATE (self); 
 
-  /* 
-   * In dispose, you are supposed to free all types referenced from this
-   * object which might themselves hold a reference to self. Generally,
-   * the most simple solution is to unref all members on which you own a 
-   * reference.
-   */
+  self->time = 0;
+  self->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
+}
 
-  /* dispose might be called multiple times, so we must guard against
-   * calling g_object_unref() on an invalid GObject.
-   */
-  if (self->priv->an_object)
-    {
-      g_object_unref (self->priv->an_object);
+static void
+waveform_level_reading_dispose (GObject *gobject)
+{
+  WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
 
-      self->priv->an_object = NULL;
-    }
+	// FIXME should I free all of it? I think yes - when we release it, we release it
+	g_array_free(self->levels, TRUE)
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (maman_bar_parent_class)->dispose (gobject);
 }
 
 static void
-maman_bar_finalize (GObject *gobject)
+waveform_level_reading_finalize (GObject *gobject)
 {
-  MamanBar *self = MAMAN_BAR (gobject);
+  WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
 
-  g_free (self->priv->a_string);
+  //g_free (self->priv->a_string);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (maman_bar_parent_class)->finalize (gobject);
 }
 
-static void
-maman_bar_class_init (MamanBarClass *klass)
-{
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
-  gobject_class->dispose = maman_bar_dispose;
-  gobject_class->finalize = maman_bar_finalize;
-
-  g_type_class_add_private (klass, sizeof (MamanBarPrivate));
-}
-
-static void
-maman_bar_init (MamanBar *self);
-{
-  self->priv = MAMAN_BAR_GET_PRIVATE (self);
-
-  self->priv->an_object = g_object_new (MAMAN_TYPE_BAZ, NULL);
-  self->priv->a_string = g_strdup ("Maman");
-}

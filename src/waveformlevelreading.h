@@ -24,6 +24,7 @@ typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 struct _WaveformLevelReading
 {
   GObject parent_instance;
+
   /* instance members */
   guint64 time;
   GArray *levels;
@@ -32,7 +33,6 @@ struct _WaveformLevelReading
 struct _WaveformLevelReadingClass
 {
   GObjectClass parent_class;
-
   /* class members */
 };
 

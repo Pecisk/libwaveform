@@ -13,19 +13,27 @@ G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 // initialisation function
 waveform_reader_init (WaveformLevelReading *self)
 {
-  self->priv = MAMAN_BAR_GET_PRIVATE (self); 
+  self->priv = WAVEFORM_READER_GET_PRIVATE (self);
 
-  /* initialize all public and private members to reasonable default values. */
-
-  /* If you need specific construction properties to complete initialization,
-   * delay initialization completion until the property is set. 
-   */
+  self->priv->an_object = g_object_new (MAMAN_TYPE_BAZ, NULL);
+  self->priv->a_string = g_strdup ("Maman");
 }
 
 static void
-maman_bar_dispose (GObject *gobject)
+waveform_reader_class_init (WaveformReaderClass *klass)
 {
-  MamanBar *self = MAMAN_BAR (gobject);
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+
+  gobject_class->dispose = waveform_reader_dispose;
+  gobject_class->finalize = waveform_reader_finalize;
+
+  g_type_class_add_private (klass, sizeof (WaveformReaderPrivate));
+}
+
+static void
+waveform_reader_dispose (GObject *gobject)
+{
+  WaveformReader *self = WAVEFORM_READER (gobject);
 
   /* 
    * In dispose, you are supposed to free all types referenced from this
@@ -49,9 +57,9 @@ maman_bar_dispose (GObject *gobject)
 }
 
 static void
-maman_bar_finalize (GObject *gobject)
+waveform_reader_finalize (GObject *gobject)
 {
-  MamanBar *self = MAMAN_BAR (gobject);
+  WaveformReader *self = WAVEFORM_READER (gobject);
 
   g_free (self->priv->a_string);
 
@@ -59,31 +67,7 @@ maman_bar_finalize (GObject *gobject)
   G_OBJECT_CLASS (maman_bar_parent_class)->finalize (gobject);
 }
 
-static void
-maman_bar_class_init (MamanBarClass *klass)
-{
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->dispose = maman_bar_dispose;
-  gobject_class->finalize = maman_bar_finalize;
-
-  g_type_class_add_private (klass, sizeof (MamanBarPrivate));
-}
-
-static void
-maman_bar_init (MamanBar *self);
-{
-  self->priv = MAMAN_BAR_GET_PRIVATE (self);
-
-  self->priv->an_object = g_object_new (MAMAN_TYPE_BAZ, NULL);
-  self->priv->a_string = g_strdup ("Maman");
-}
-
-
-
-static GMainLoop *loop;
-WaveformLevelReading *reading;
-GList *readings;
 
 gunit number_of_channels = 0;
 guint64 number_of_samples = 0;
