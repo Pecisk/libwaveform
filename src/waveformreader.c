@@ -53,7 +53,7 @@ waveform_reader_dispose (GObject *gobject)
     }
 
   /* Chain up to the parent class */
-  G_OBJECT_CLASS (maman_bar_parent_class)->dispose (gobject);
+  G_OBJECT_CLASS (waveform_reader_parent_class)->dispose (gobject);
 }
 
 static void
@@ -64,7 +64,7 @@ waveform_reader_finalize (GObject *gobject)
   g_free (self->priv->a_string);
 
   /* Chain up to the parent class */
-  G_OBJECT_CLASS (maman_bar_parent_class)->finalize (gobject);
+  G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
 }
 
 
