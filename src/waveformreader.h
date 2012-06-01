@@ -28,7 +28,7 @@ struct _WaveformReader
   GObject parent_instance;
 
   /* instance members */
-  MamanBarPrivate *priv;
+  WaveformReaderPrivate *priv;
   
 };
 
@@ -44,7 +44,7 @@ struct _WaveformReaderClass
   GObjectClass parent_class;
 
   /* class members */
-  static GMainLoop *loop;
+  //static GMainLoop *loop;
 };
 
 /* used by MAMAN_TYPE_BAR */
@@ -55,6 +55,6 @@ GType waveform_reader_get_type (void);
  */
 WaveformLevelReading *	waveform_reader_get_levels(WaveformReader *reader, gchar *file_location);
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
-WaveformReader * waveform_reader_new(void);
+//WaveformReader * waveform_reader_new(void);
 
 #endif /* __WAVEFORM_READER_H__ */

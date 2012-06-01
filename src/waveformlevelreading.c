@@ -32,9 +32,6 @@ waveform_level_reading_dispose (GObject *gobject)
 {
   WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
 
-	// FIXME should I free all of it? I think yes - when we release it, we release it
-	g_array_free(self->levels, TRUE)
-
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_level_reading_parent_class)->dispose (gobject);
 }
@@ -44,8 +41,9 @@ waveform_level_reading_finalize (GObject *gobject)
 {
   WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
 
-  //g_free (self->priv->a_string);
-
+	// FIXME should I free all of it? I think yes - when we release it, we release it
+	g_array_free(self->levels, TRUE);
+		
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_level_reading_parent_class)->finalize (gobject);
 }
