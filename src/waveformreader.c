@@ -8,6 +8,16 @@
 #include <gst/gst.h>
 #include <stdbool.h>
 
+struct _MamanBarPrivate
+{
+  static GMainLoop *loop;
+  WaveformLevelReading *reading;
+  GList *readings;
+};
+
+static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
+
+
 G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 
 // initialisation function
@@ -143,7 +153,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 	}
 }
 
-GList * read_levels(WaveformReader *self, gchar *file_location) {
+GList * read_levels(WaveformReader *self, const gchar *file_location) {
 	
 	// Create main loop
 	// FIXME what happens if loop must be shared with? Not fully understanding this

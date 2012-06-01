@@ -32,12 +32,6 @@ struct _WaveformReader
   
 };
 
-struct _MamanBarPrivate
-{
-  static GMainLoop *loop;
-  WaveformLevelReading *reading;
-  GList *readings;
-};
 
 struct _WaveformReaderClass
 {
@@ -54,7 +48,7 @@ GType waveform_reader_get_type (void);
  * Method definitions.
  */
 WaveformLevelReading *	waveform_reader_get_levels(WaveformReader *reader, gchar *file_location);
-static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
+
 //WaveformReader * waveform_reader_new(void);
 
 #endif /* __WAVEFORM_READER_H__ */
