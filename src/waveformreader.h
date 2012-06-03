@@ -17,7 +17,6 @@
 #define WAVEFORM_READER_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), WAVEFORM_TYPE_READER, WaveformReaderClass))
 #define WAVEFORM_IS_READER_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), WAVEFORM_TYPE_READER))
 #define WAVEFORM_READER_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), WAVEFORM_TYPE_READER, WaveformReaderClass))
-#define WAVEFORM_READER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_READER, WaveformReaderPrivate))
 
 typedef struct _WaveformReader        WaveformReader;
 typedef struct _WaveformReaderClass   WaveformReaderClass;

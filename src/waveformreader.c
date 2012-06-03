@@ -8,15 +8,19 @@
 #include <gst/gst.h>
 #include <stdbool.h>
 
-struct _MamanBarPrivate
+#define WAVEFORM_READER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_READER, WaveformReaderPrivate))
+
+struct _WaveformReaderPrivate
 {
-  static GMainLoop *loop;
+  GMainContext *context;
+  GMainLoop *loop;
   WaveformLevelReading *reading;
   GList *readings;
 };
 
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
-
+static void waveform_reader_finalize (GObject *gobject);
+static void waveform_reader_dispose (GObject *gobject);
 
 G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 
@@ -30,6 +34,7 @@ waveform_reader_init (WaveformReader *self)
   // FIXME maybe shouldn't be done at all?
   self->priv->reading = NULL;
   self->priv->readings = NULL;
+  self->priv->context = g_main_context_new();
 }
 
 static void
@@ -81,17 +86,17 @@ waveform_reader_finalize (GObject *gobject)
 
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 {
+	// FIXME get WaveformReader self from user_data pointer
+	// check if it's right macros or right way to do it
+	WaveformReader *self = WAVEFORM_READER ((GObject*)user_data);
+	
 	switch(GST_MESSAGE_TYPE(msg)) {
 		case GST_MESSAGE_EOS: {
 			//g_message("End of the song.");
-			g_main_loop_quit(loop);
+			g_main_loop_quit(self->priv->loop);
 			break;
 		}
 		case GST_MESSAGE_ELEMENT: {
-			
-			// FIXME get WaveformReader self from user_data pointer
-			// check if it's right macros or right way to do it
-			WaveformReader *self = WAVEFORM_READER ((GObject*)user_data);
 			
 			const GstStructure *st = gst_message_get_structure(msg);
 			const gchar *name = gst_structure_get_name(st);
@@ -104,7 +109,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			//number_of_samples++;
 
 			// creating new WaveformLevelReading for storing reading values
-			self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL)
+			self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
 			
 			// get value list of channel median power
 			const GValue *list_value = gst_structure_get_value(st, "rms");
@@ -123,7 +128,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// Set end time of the buffer as time of the reading
 			const GValue *stream_time = gst_structure_get_value(st, "stream-time");
 			const GValue *duration = gst_structure_get_value(st, "duration");
-			self->priv->reading->time = ((guint64)g_value_get_uint(stream_time)) + ((guint64)g_value_get_uint());
+			self->priv->reading->time = ((guint64)g_value_get_uint(stream_time)) + ((guint64)g_value_get_uint(duration));
 			
 			
 			// Initialise GArray for storing levels for each channel
@@ -135,18 +140,19 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 				// get value from structure field 'rms' array
 				rms_value = g_value_array_get_nth(rms_list, i);
 				// add rms value to levels array
-				g_array_append_val(self->priv->reading->levels, g_value_get_double(rms_value));
+				gdouble rms_value_double = g_value_get_double(rms_value);
+				g_array_append_val(self->priv->reading->levels, rms_value_double);
 			}
 
 			// When finished with reading, append it to linked list
 			g_list_append (self->priv->readings, self->priv->reading);
 			// FIXME unref reading, because it's has readings ref now
-			g_object_unref(reading);
+			g_object_unref(self->priv->reading);
 			// FIXME unref list_value, rms_value, stream_time, duration?
 			g_object_unref(list_value);
 			g_object_unref(rms_value);
-			g_object_unref(stream_value);
-			g_object_unref(duration_value);
+			g_object_unref(stream_time);
+			g_object_unref(duration);
 		}
 		default:
 			break;
@@ -155,9 +161,10 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 GList * read_levels(WaveformReader *self, const gchar *file_location) {
 	
+	// We already have created GMainContext as self->priv->context, use it as default for a thread
+	g_main_context_push_thread_default(self->priv->context);
 	// Create main loop
-	// FIXME what happens if loop must be shared with? Not fully understanding this
-	self->priv->loop = g_main_loop_new(NULL, FALSE);
+	self->priv->loop = g_main_loop_new(self->priv->context, FALSE);
 
 	// Initialising GArray for returning readings
 	// self->priv->readings = g_array_new (FALSE, FALSE, sizeof (WaveformLevelReading));
