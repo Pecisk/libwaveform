@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+datarootdir=@datarootdir@
+datadir=@datadir@
+includedir=@includedir@/liblibwaveform-0.1
+
+Name: liblibwaveform
+Description: Library for reading and rendering audio waveforms
+Version: @VERSION@
+Requires: 
+Libs: -L${libdir} -llibwaveform
+Cflags: -I${includedir}
