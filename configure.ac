@@ -26,8 +26,8 @@ LT_INIT
 
 PKG_CHECK_MODULES(LIBWAVEFORM, [gstreamer-1.0 glib-2.0 ])
 
-
-
+dnl check for gobject-introspection
+GOBJECT_INTROSPECTION_CHECK([1.31.1])
 
 AC_OUTPUT([
 Makefile

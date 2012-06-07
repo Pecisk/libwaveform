@@ -21,6 +21,7 @@ DISTCLEANFILES = intltool-extract \
 	intltool-update \
 	po/.intltool-merge-cache
 
+DISTCHECK_CONFIGURE_FLAGS = --enable-introspection
 
 # Remove doc directory on uninstall
 uninstall-local:
