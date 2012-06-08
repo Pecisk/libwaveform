@@ -85,7 +85,7 @@ waveform_reader_finalize (GObject *gobject)
 {
   WaveformReader *self = WAVEFORM_READER (gobject);
 
-  g_free_array(self->priv->readings, TRUE);
+  g_array_free(self->priv->readings, TRUE);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
@@ -202,7 +202,7 @@ GList * waveform_reader_read_levels (WaveformReader *reader, const gchar *file_l
 	gst_object_unref(filesrc);
 	
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-	gst_bus_add_watch(bus, bus_call, self);
+	gst_bus_add_watch(bus, bus_call, reader);
 	gst_object_unref(bus);
 	
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
