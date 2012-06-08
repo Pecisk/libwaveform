@@ -21,6 +21,14 @@
 typedef struct _WaveformLevelReading        WaveformLevelReading;
 typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 
+/**
+ * WaveformLevelReading:
+ *
+ * The #WaveformLevelReading structure.
+ *
+ * Since: 0.1
+ **/
+
 struct _WaveformLevelReading
 {
   GObject parent_instance;

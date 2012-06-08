@@ -1,5 +1,20 @@
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright/Licensing information.
+ * lib.h
+ * Copyright (C) 2012 Peteris Krisjanis <pecisk@gmail.com>
+ * 
+ * libwaveform is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * libwaveform is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
 #ifndef __WAVEFORM_READER_H__
@@ -22,6 +37,15 @@ typedef struct _WaveformReader        WaveformReader;
 typedef struct _WaveformReaderClass   WaveformReaderClass;
 typedef struct _WaveformReaderPrivate WaveformReaderPrivate;
 
+
+/**
+ * WaveformReader:
+ *
+ * The #WaveformReader structure.
+ *
+ * Since: 0.1
+ **/
+
 struct _WaveformReader
 {
   GObject parent_instance;
@@ -30,7 +54,6 @@ struct _WaveformReader
   WaveformReaderPrivate *priv;
   
 };
-
 
 struct _WaveformReaderClass
 {
@@ -47,7 +70,6 @@ GType waveform_reader_get_type (void);
  * Method definitions.
  */
 WaveformLevelReading *	waveform_reader_get_levels(WaveformReader *reader, gchar *file_location);
-
-//WaveformReader * waveform_reader_new(void);
+WaveformReader * waveform_reader_new(void);
 
 #endif /* __WAVEFORM_READER_H__ */

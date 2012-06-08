@@ -1,5 +1,20 @@
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * Copyright/Licensing information.
+ * lib.h
+ * Copyright (C) 2012 Peteris Krisjanis <pecisk@gmail.com>
+ * 
+ * libwaveform is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * libwaveform is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
 #include <glib-object.h>
@@ -24,7 +39,7 @@ static void waveform_reader_dispose (GObject *gobject);
 
 G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 
-// initialisation function
+// instance initialisation
 static void
 waveform_reader_init (WaveformReader *self)
 {
@@ -37,6 +52,7 @@ waveform_reader_init (WaveformReader *self)
   self->priv->context = g_main_context_new();
 }
 
+// class initialisation
 static void
 waveform_reader_class_init (WaveformReaderClass *klass)
 {
@@ -51,22 +67,15 @@ waveform_reader_class_init (WaveformReaderClass *klass)
 static void
 waveform_reader_dispose (GObject *gobject)
 {
-  WaveformReader *self = WAVEFORM_READER (gobject);
-  /* 
-   * In dispose, you are supposed to free all types referenced from this
-   * object which might themselves hold a reference to self. Generally,
-   * the most simple solution is to unref all members on which you own a 
-   * reference.
-   */
 
-  /* dispose might be called multiple times, so we must guard against
-   * calling g_object_unref() on an invalid GObject.
-   */
+  WaveformReader *self = WAVEFORM_READER (gobject);
+
   if (self->priv->reading)
     {
       g_object_unref (self->priv->reading);
       self->priv->reading = NULL;
     }
+
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->dispose (gobject);
 }
@@ -159,26 +168,35 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 	}
 }
 
-GList * read_levels(WaveformReader *self, const gchar *file_location) {
-	
-	// We already have created GMainContext as self->priv->context, use it as default for a thread
-	g_main_context_push_thread_default(self->priv->context);
-	// Create main loop
-	self->priv->loop = g_main_loop_new(self->priv->context, FALSE);
+/**
+ * waveform_reader_read_levels:
+ * @reader: pointer to #WaveformReader object which reads levels
+ * @file_location: a pointer to a #gchar array to file location
+ *
+ * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
+ *
+ * Returns: (element-type Waveform.LevelReading) (transfer container): The new #GList of #WaveformLevelReading
+ *
+ * Since: 0.1
+ */
 
-	// Initialising GArray for returning readings
-	// self->priv->readings = g_array_new (FALSE, FALSE, sizeof (WaveformLevelReading));
+GList * waveform_reader_read_levels (WaveformReader *reader, const gchar *file_location) {
+	
+	// We already have created GMainContext as reader->priv->context, use it as default for a thread
+	g_main_context_push_thread_default(reader->priv->context);
+
+    // Create main loop
+	reader->priv->loop = g_main_loop_new(reader->priv->context, FALSE);
 
 	// Initialising GList for returning readings
-	self->priv->readings = NULL;
+	reader->priv->readings = NULL;
 	
 	GstElement *pipeline;
 	GstBus *bus;
 	
 	pipeline = gst_parse_launch("filesrc name=src ! decodebin ! audioconvert ! level message=true name=level_element ! fakesink", NULL);
-	//pipeline = gst_element_factory_make("playbin", "player");
 	
-	// set up object values
+	// set up element properties
 	GstElement *filesrc = gst_bin_get_by_name(GST_BIN(pipeline), "src");
 	g_object_set(G_OBJECT(filesrc), "location", file_location, NULL);
 	gst_object_unref(filesrc);
@@ -189,13 +207,26 @@ GList * read_levels(WaveformReader *self, const gchar *file_location) {
 	
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 	
-	g_main_loop_run(self->priv->loop);
+	g_main_loop_run(reader->priv->loop);
 	
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 	
 	gst_object_unref(GST_OBJECT(pipeline));
 
 	// return pointer to linked list
-	return self->priv->readings;
+	return reader->priv->readings;
 }
 
+/**
+ * waveform_reader_new:
+ *
+ * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
+ *
+ * Returns: (transfer full): The new #WaveformReader
+ *
+ * Since: 0.1
+ */
+
+WaveformReader * waveform_reader_new(void) {
+	return g_object_new(WAVEFORM_TYPE_READER, NULL);
+}
