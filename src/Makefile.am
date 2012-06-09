@@ -42,17 +42,17 @@ gir_headers=$(patsubst %,$(srcdir)/%, $(include_HEADERS))
 gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES))
 
 Waveform-0.1.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
-	$(AM_V_GEN) $(INTROSPECTION_SCANNER) -v --namespace Waveform \
+	$(AM_V_GEN) $(INTROSPECTION_SCANNER) --verbose --warn-all --namespace Waveform \
 		--nsversion=@LIBWAVEFORM_API_VERSION@ \
 		--warn-all \
-		-I$(top_srcdir)/lib \
-		-I$(top_builddir)/lib \
+		-I$(top_srcdir)/src \
+		-I$(top_builddir)/src \
 		-DIN_GOBJECT_INTROSPECTION=1 \
 		--c-include='src/libwaveform.h' \
 		--library=libwaveform-@LIBWAVEFORM_API_VERSION@.la \
 		--include=GLib-2.0 \
 		--include=GObject-2.0 \
-		--include=Gstreamer-1.0 \
+		--include=Gst-1.0 \
 		--libtool="$(top_builddir)/libtool" \
 		--pkg glib-2.0 \
 		--pkg gobject-2.0 \

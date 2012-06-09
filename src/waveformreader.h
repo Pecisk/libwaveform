@@ -22,7 +22,7 @@
 
 #include <glib-object.h>
 #include <gst/gst.h>
-
+#include "waveformlevelreading.h"
 /*
  * Type macros.
  */
