@@ -11,7 +11,7 @@ AM_CFLAGS =\
 lib_LTLIBRARIES = libwaveform.la
 
 
-libwaveform_la_SOURCES = \
+libwaveform_@LIBINSANITY_API_VERSION@_la_SOURCES = \
 	waveformreader.c\
 	waveformlevelreading.c
 
@@ -35,22 +35,47 @@ INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
 if HAVE_INTROSPECTION
-introspection_sources = $(libwaveform_la_SOURCES)
+introspection_sources = $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES)
+INTROSPECTION_GIRS = Waveform-@LIBWAVEFORM_API_VERSION@.gir
 
-Waveform-0.1.gir: libwaveform.la
-Waveform_0_1_gir_INCLUDES = GObject-2.0
-Waveform_0_1_gir_CFLAGS = $(INCLUDES)
-Waveform_0_1_gir_LIBS = libwaveform.la
-Waveform_0_1_gir_FILES = $(introspection_sources)
-Waveform_0_1_gir_NAMESPACE = Waveform
-Waveform_0_1_gir_VERSION = 0.1
-INTROSPECTION_GIRS += Waveform-0.1.gir
+gir_headers=$(patsubst %,$(srcdir)/%, $(include_HEADERS))
+gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBINSANITY_API_VERSION@_la_SOURCES))
+
+Waveform-0.1.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
+	$(AM_V_GEN) $(INTROSPECTION_SCANNER) -v --namespace Waveform \
+		--nsversion=@LIBWAVEFORM_API_VERSION@ \
+		--warn-all \
+		-I$(top_srcdir)/lib \
+		-I$(top_builddir)/lib \
+		-DIN_GOBJECT_INTROSPECTION=1 \
+		--c-include='src/libwaveform.h' \
+		--library=libwaveform-@LIBWAVEFORM_API_VERSION@.la \
+		--include=GLib-2.0 \
+		--include=GObject-2.0 \
+		--include=Gstreamer-1.0 \
+		--libtool="$(top_builddir)/libtool" \
+		--pkg glib-2.0 \
+		--pkg gobject-2.0 \
+		--pkg gmodule-no-export-2.0 \
+		--pkg gthread-2.0 \
+		--pkg gstreamer-1.0 \
+		--pkg-export waveform-@LIBWAVEFORM_API_VERSION@ \
+		--output $@ \
+		$(gir_headers) \
+		$(gir_sources)
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(INTROSPECTION_GIRS)
 
 typelibdir = $(libdir)/girepository-1.0
 typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+
+%.typelib: %.gir $(INTROSPECTION_COMPILER)
+	$(AM_V_GEN)$(INTROSPECTION_COMPILER) \
+		--includedir=$(srcdir)/lib \
+		--includedir=$(builddir)/lib \
+		$(INTROSPECTION_COMPILER_OPTS) $< -o $(@F)
 
 CLEANFILES = $(gir_DATA) $(typelib_DATA)
 
