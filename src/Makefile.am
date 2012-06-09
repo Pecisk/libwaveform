@@ -8,10 +8,10 @@ AM_CFLAGS =\
 	 -Wall\
 	 -g
 
-lib_LTLIBRARIES = libwaveform.la
+lib_LTLIBRARIES = libwaveform-@LIBWAVEFORM_API_VERSION@.la
 
 
-libwaveform_@LIBINSANITY_API_VERSION@_la_SOURCES = \
+libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES = \
 	waveformreader.c\
 	waveformlevelreading.c
 
@@ -39,7 +39,7 @@ introspection_sources = $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES)
 INTROSPECTION_GIRS = Waveform-@LIBWAVEFORM_API_VERSION@.gir
 
 gir_headers=$(patsubst %,$(srcdir)/%, $(include_HEADERS))
-gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBINSANITY_API_VERSION@_la_SOURCES))
+gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES))
 
 Waveform-0.1.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
 	$(AM_V_GEN) $(INTROSPECTION_SCANNER) -v --namespace Waveform \
