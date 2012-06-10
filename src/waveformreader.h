@@ -63,7 +63,6 @@ struct _WaveformReaderClass
   //static GMainLoop *loop;
 };
 
-/* used by MAMAN_TYPE_BAR */
 GType waveform_reader_get_type (void);
 
 /*

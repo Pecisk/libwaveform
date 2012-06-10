@@ -170,8 +170,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 /**
  * waveform_reader_read_levels:
- * @reader: pointer to #WaveformReader object which reads levels
- * @file_location: a pointer to a #gchar array to file location
+ * @reader: pointer to #WaveformReader object which reads levels.
+ * @file_location: a pointer to a #gchar array to file location.
  *
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
