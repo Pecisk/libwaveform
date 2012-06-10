@@ -15,14 +15,14 @@ libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES = \
 	waveformreader.c\
 	waveformlevelreading.c
 
-libwaveform_la_LDFLAGS = 
+libwaveform_@LIBWAVEFORM_API_VERSION@_la_LDFLAGS = 
 
-libwaveform_la_LIBADD = $(LIBWAVEFORM_LIBS)
+libwaveform_@LIBWAVEFORM_API_VERSION@_la_LIBADD = $(LIBWAVEFORM_LIBS)
 
 include_HEADERS = \
 	libwaveform.h\
-    waveformreader.c\
-    waveformlevelreading.c
+    waveformreader.h\
+    waveformlevelreading.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libwaveform-0.1.pc
@@ -42,7 +42,7 @@ gir_headers=$(patsubst %,$(srcdir)/%, $(include_HEADERS))
 gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES))
 
 Waveform-0.1.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
-	$(AM_V_GEN) $(INTROSPECTION_SCANNER) --verbose --warn-all --namespace Waveform \
+	$(AM_V_GEN) $(INTROSPECTION_SCANNER) --verbose --warn-all --namespace=Waveform \
 		--nsversion=@LIBWAVEFORM_API_VERSION@ \
 		--warn-all \
 		-I$(top_srcdir)/src \
