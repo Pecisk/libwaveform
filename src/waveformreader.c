@@ -175,7 +175,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
  *
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
- * Returns: (element-type Waveform.LevelReading) (transfer container): The new #GList of #WaveformLevelReading
+ * Return value: (transfer container) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
  *
  * Since: 0.1
  */
