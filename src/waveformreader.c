@@ -169,18 +169,32 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 }
 
 /**
+ * waveform_reader_new:
+ *
+ * Creates #WaveformReader which manages reading of audio files.
+ *
+ * Returns: (transfer full): The new #WaveformReader
+ *
+ * Since: 0.1
+ */
+
+WaveformReader * waveform_reader_new(void) {
+	return g_object_new(WAVEFORM_TYPE_READER, NULL);
+}
+
+/**
  * waveform_reader_read_levels:
  * @reader: pointer to #WaveformReader object which reads levels.
  * @file_location: a pointer to a #gchar array to file location.
  *
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
- * Return value: (transfer container) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
+ * Returns: (transfer container) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
  *
  * Since: 0.1
  */
 
-GList * waveform_reader_read_levels (WaveformReader *reader, const gchar *file_location) {
+GList * waveform_reader_read_levels(WaveformReader *reader, const gchar *file_location) {
 	
 	// We already have created GMainContext as reader->priv->context, use it as default for a thread
 	g_main_context_push_thread_default(reader->priv->context);
@@ -215,18 +229,4 @@ GList * waveform_reader_read_levels (WaveformReader *reader, const gchar *file_l
 
 	// return pointer to linked list
 	return reader->priv->readings;
-}
-
-/**
- * waveform_reader_new:
- *
- * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
- *
- * Returns: (transfer full): The new #WaveformReader
- *
- * Since: 0.1
- */
-
-WaveformReader * waveform_reader_new(void) {
-	return g_object_new(WAVEFORM_TYPE_READER, NULL);
 }
