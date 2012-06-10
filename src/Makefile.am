@@ -30,7 +30,6 @@ pkgconfig_DATA = libwaveform-0.1.pc
 EXTRA_DIST = \
 	libwaveform-0.1.pc.in
 
-INTROSPECTION_GIRS =
 INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
@@ -41,7 +40,7 @@ INTROSPECTION_GIRS = Waveform-@LIBWAVEFORM_API_VERSION@.gir
 gir_headers=$(patsubst %,$(srcdir)/%, $(include_HEADERS))
 gir_sources=$(patsubst %,$(srcdir)/%, $(libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES))
 
-Waveform-0.1.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
+Waveform-@LIBWAVEFORM_API_VERSION@.gir: $(INTROSPECTION_SCANNER) libwaveform-@LIBWAVEFORM_API_VERSION@.la
 	$(AM_V_GEN) $(INTROSPECTION_SCANNER) --verbose --warn-all --namespace=Waveform \
 		--nsversion=@LIBWAVEFORM_API_VERSION@ \
 		--warn-all \
