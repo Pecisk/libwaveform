@@ -183,7 +183,7 @@ WaveformReader * waveform_reader_new(void) {
 }
 
 /**
- * waveform_reader_read_levels:
+ * waveform_reader_get_levels:
  * @reader: pointer to #WaveformReader object which reads levels.
  * @file_location: a pointer to a #gchar array to file location.
  *
@@ -194,7 +194,7 @@ WaveformReader * waveform_reader_new(void) {
  * Since: 0.1
  */
 
-GList * waveform_reader_read_levels(WaveformReader *reader, const gchar *file_location) {
+GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location) {
 	
 	// We already have created GMainContext as reader->priv->context, use it as default for a thread
 	g_main_context_push_thread_default(reader->priv->context);
