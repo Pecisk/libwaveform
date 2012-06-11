@@ -68,7 +68,7 @@ GType waveform_reader_get_type (void);
 /*
  * Method definitions.
  */
-WaveformLevelReading *	waveform_reader_get_levels(WaveformReader *reader, gchar *file_location);
+GList *	waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location);
 WaveformReader * waveform_reader_new(void);
 
 #endif /* __WAVEFORM_READER_H__ */
