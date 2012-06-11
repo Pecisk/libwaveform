@@ -137,7 +137,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// Set end time of the buffer as time of the reading
 			const GValue *stream_time = gst_structure_get_value(st, "stream-time");
 			const GValue *duration = gst_structure_get_value(st, "duration");
-			self->priv->reading->time = ((guint64)g_value_get_uint(stream_time)) + ((guint64)g_value_get_uint(duration));
+			self->priv->reading->time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
 			
 			
 			// Initialise GArray for storing levels for each channel
@@ -154,14 +154,11 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
-			g_list_append (self->priv->readings, self->priv->reading);
-			// FIXME unref reading, because it's has readings ref now
+			self->priv->readings = g_list_append (self->priv->readings, self->priv->reading);
+			// unref reading, because it's has readings ref now
 			g_object_unref(self->priv->reading);
-			// FIXME unref list_value, rms_value, stream_time, duration?
-			g_object_unref(list_value);
-			g_object_unref(rms_value);
-			g_object_unref(stream_time);
-			g_object_unref(duration);
+			// FIXME why this causes segfault?
+			//g_value_array_free(rms_list);
 		}
 		default:
 			break;
@@ -230,6 +227,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	
 	gst_object_unref(GST_OBJECT(pipeline));
 
+	g_message("Size: %i", g_list_length(reader->priv->readings));
 	// return pointer to linked list
 	return reader->priv->readings;
 }
