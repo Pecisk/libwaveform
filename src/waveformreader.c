@@ -91,12 +91,9 @@ waveform_reader_finalize (GObject *gobject)
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
 }
 
-//guint64 number_of_samples = 0;
-
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 {
-	// FIXME get WaveformReader self from user_data pointer
-	// check if it's right macros or right way to do it
+	// get WaveformReader self from user_data pointer
 	WaveformReader *self = WAVEFORM_READER ((GObject*)user_data);
 	
 	switch(GST_MESSAGE_TYPE(msg)) {
