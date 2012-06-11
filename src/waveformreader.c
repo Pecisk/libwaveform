@@ -205,6 +205,9 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// Initialising GList for returning readings
 	reader->priv->readings = NULL;
 	
+	// Initialising Gstreamer without params
+	gst_init(NULL, NULL);
+	
 	GstElement *pipeline;
 	GstBus *bus;
 	
