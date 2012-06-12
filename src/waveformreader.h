@@ -24,6 +24,8 @@
 #include <gst/gst.h>
 #include "waveformlevelreading.h"
 
+#define GST_USE_UNSTABLE_API 1
+
 /*
  * Type macros.
  */

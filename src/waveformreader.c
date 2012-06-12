@@ -22,6 +22,7 @@
 #include "waveformreader.h"
 #include <gst/gst.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define WAVEFORM_READER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_READER, WaveformReaderPrivate))
 
@@ -161,6 +162,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 		default:
 			break;
 	}
+
+	return TRUE;
 }
 
 /**

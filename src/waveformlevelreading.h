@@ -66,7 +66,4 @@ GType waveform_level_reading_get_type (void);
  * Method definitions.
  */
 
-static void waveform_level_reading_dispose (GObject *gobject);
-static void waveform_level_reading_finalize (GObject *gobject);
-
 #endif /* __WAVEFORM_LEVEL_READING_H__ */

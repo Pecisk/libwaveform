@@ -22,6 +22,9 @@
 
 G_DEFINE_TYPE (WaveformLevelReading, waveform_level_reading, G_TYPE_OBJECT);
 
+static void waveform_level_reading_dispose (GObject *gobject);
+static void waveform_level_reading_finalize (GObject *gobject);
+
 static void
 waveform_level_reading_class_init (WaveformLevelReadingClass *klass)
 {
