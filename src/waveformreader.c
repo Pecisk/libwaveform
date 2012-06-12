@@ -87,7 +87,7 @@ waveform_reader_finalize (GObject *gobject)
   WaveformReader *self = WAVEFORM_READER (gobject);
 
   // free readings list when finished
-  g_list_free(self->priv->readings);
+  //g_list_free(self->priv->readings);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
@@ -110,6 +110,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			const gchar *name = gst_structure_get_name(st);
 			
 			// if not equal do not procceed, it's not level element message
+			if(name == NULL)
+				break;
 			if(strcmp(name, "level") != 0)
 				break;
 
@@ -215,19 +217,27 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	GstElement *filesrc = gst_bin_get_by_name(GST_BIN(pipeline), "src");
 	g_object_set(G_OBJECT(filesrc), "location", file_location, NULL);
 	gst_object_unref(filesrc);
-	
+
+	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
 	gst_bus_add_watch(bus, bus_call, reader);
+
+	// playing back pipeline
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+
+	// kicking off loop
+	g_main_loop_run(reader->priv->loop);
+
+	// pausing pipeline
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+
+	// stop and remove watch as we don't need it for now
+	gst_bus_remove_signal_watch(bus);
+
+	// unref pipeline and bus
+	gst_object_unref(GST_OBJECT(pipeline));
 	gst_object_unref(bus);
 	
-	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
-	
-	g_main_loop_run(reader->priv->loop);
-	
-	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
-	
-	gst_object_unref(GST_OBJECT(pipeline));
-
 	g_message("Size: %i", g_list_length(reader->priv->readings));
 
 	// as we prepended objects, reverse list
