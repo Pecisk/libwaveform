@@ -85,7 +85,8 @@ waveform_reader_finalize (GObject *gobject)
 {
   WaveformReader *self = WAVEFORM_READER (gobject);
 
-  g_array_free(self->priv->readings, TRUE);
+  // free readings list when finished
+  g_list_free(self->priv->readings);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
@@ -151,7 +152,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
-			self->priv->readings = g_list_append (self->priv->readings, self->priv->reading);
+			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			// unref reading, because it's has readings ref now
 			g_object_unref(self->priv->reading);
 			// FIXME why this causes segfault?
@@ -225,6 +226,10 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	gst_object_unref(GST_OBJECT(pipeline));
 
 	g_message("Size: %i", g_list_length(reader->priv->readings));
+
+	// as we prepended objects, reverse list
+	reader->priv->readings = g_list_reverse(reader->priv->readings);
+
 	// return pointer to linked list
 	return reader->priv->readings;
 }
