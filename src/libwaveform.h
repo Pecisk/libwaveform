@@ -1,6 +1,6 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * lib.h
+ * libwaveform.h
  * Copyright (C) 2012 Peteris Krisjanis <pecisk@gmail.com>
  * 
  * libwaveform is free software: you can redistribute it and/or modify it
