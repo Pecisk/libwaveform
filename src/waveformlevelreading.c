@@ -49,7 +49,7 @@ static void
 waveform_level_reading_dispose (GObject *gobject)
 {
   WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
-
+	
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_level_reading_parent_class)->dispose (gobject);
 }

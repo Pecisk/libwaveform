@@ -231,9 +231,6 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// pausing pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 
-	// stop and remove watch as we don't need it for now
-	gst_bus_remove_signal_watch(bus);
-
 	// unref pipeline and bus
 	gst_object_unref(GST_OBJECT(pipeline));
 	gst_object_unref(bus);
