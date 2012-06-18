@@ -33,7 +33,6 @@ waveform_level_reading_class_init (WaveformLevelReadingClass *klass)
   gobject_class->dispose = waveform_level_reading_dispose;
   gobject_class->finalize = waveform_level_reading_finalize;
 
-  //g_type_class_add_private (klass, sizeof (MamanBarPrivate));
 }
 
 static void

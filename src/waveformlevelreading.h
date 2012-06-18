@@ -59,7 +59,6 @@ struct _WaveformLevelReadingClass
   /* class members */
 };
 
-/* used by MAMAN_TYPE_BAR */
 GType waveform_level_reading_get_type (void);
 
 /*

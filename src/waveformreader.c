@@ -156,10 +156,6 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 			// When finished with reading, append it to linked list
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
-			// unref reading, because it's has readings ref now
-			g_object_unref(self->priv->reading);
-			// FIXME why this causes segfault?
-			//g_value_array_free(rms_list);
 		}
 		default:
 			break;

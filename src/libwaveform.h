@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
-#ifndef __GST_H__
-#define __GST_H__
+#ifndef __LIBWAVEFORM_H__
+#define __LIBWAVEFORM_H__
 #include <waveformreader.h>
 #include <waveformlevelreading.h>
-#endif /* __GST_H__ */
+#endif /* __LIBWAVEFORM_H__ */
