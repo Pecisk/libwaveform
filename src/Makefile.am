@@ -20,7 +20,7 @@ libwaveform_@LIBWAVEFORM_API_VERSION@_la_LDFLAGS =
 libwaveform_@LIBWAVEFORM_API_VERSION@_la_LIBADD = $(LIBWAVEFORM_LIBS)
 
 include_HEADERS = \
-	libwaveform.h\
+	waveform.h\
     waveformreader.h\
     waveformlevelreading.h
 
@@ -47,7 +47,7 @@ Waveform-@LIBWAVEFORM_API_VERSION@.gir: $(INTROSPECTION_SCANNER) libwaveform-@LI
 		-I$(top_srcdir)/src \
 		-I$(top_builddir)/src \
 		-DIN_GOBJECT_INTROSPECTION=1 \
-		--c-include='src/libwaveform.h' \
+		--c-include='src/waveform.h' \
 		--library=libwaveform-@LIBWAVEFORM_API_VERSION@.la \
 		--include=GLib-2.0 \
 		--include=GObject-2.0 \
