@@ -38,8 +38,6 @@ waveform_level_reading_class_init (WaveformLevelReadingClass *klass)
 static void
 waveform_level_reading_init (WaveformLevelReading *self)
 {
-  //self->priv = MAMAN_BAR_GET_PRIVATE (self); 
-
   self->time = 0;
   self->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
 }
@@ -47,7 +45,7 @@ waveform_level_reading_init (WaveformLevelReading *self)
 static void
 waveform_level_reading_dispose (GObject *gobject)
 {
-  WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
+  //WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
 	
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_level_reading_parent_class)->dispose (gobject);
