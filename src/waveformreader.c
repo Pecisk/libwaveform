@@ -85,7 +85,7 @@ waveform_reader_dispose (GObject *gobject)
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->dispose (gobject);
 }
-
+	
 static void
 waveform_reader_finalize (GObject *gobject)
 {
@@ -96,6 +96,19 @@ waveform_reader_finalize (GObject *gobject)
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
+}
+
+static void
+on_pad_added (GstElement *element,
+              GstPad     *pad,
+              gpointer    data)
+{
+  GstPad *sinkpad;
+  GstElement *converter = (GstElement *) data;
+  g_print ("Dynamic pad created, linking decoder/converter\n");
+  sinkpad = gst_element_get_static_pad (converter, "sink");
+  gst_pad_link (pad, sinkpad);
+  gst_object_unref (sinkpad);
 }
 
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
@@ -211,29 +224,35 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	GstBus *bus;
 
 	pipeline = gst_pipeline_new("level-reader-pipeline");
-	filesrc = gst_element_factory_make("filesrc","file-source");
-	decoder = gst_element_factory_make("decodebin","codec-decoder");
+	//filesrc = gst_element_factory_make("filesrc","file-source");
+	decoder = gst_element_factory_make("uridecodebin","codec-decoder");
 	converter = gst_element_factory_make("audioconvert","audio-converter");
 	level_element = gst_element_factory_make("level","level-element");
 	fakesink = gst_element_factory_make("fakesink", "fake-sink");
 	
 	// FIXME return API error about problems with gstreamer core installation
-	if (!pipeline || !filesrc || !decoder || !converter || !level_element || !fakesink) {
+	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
     g_printerr ("One element could not be created. Exiting.\n");
     //return -1;
 	}
 
-	// add elements to the pipeline
-	gst_bin_add_many (GST_BIN (pipeline), filesrc, decoder, converter, level_element, fakesink, NULL);
-	// link elements
-	gst_element_link_many (filesrc, decoder, converter, level_element, fakesink, NULL);
-	
 	// set up file location
 	// FIXME error if file isn't valid (not found, or can't be processed)
-	GstElement *filesrc = gst_bin_get_by_name(GST_BIN(pipeline), "src");
-	g_object_set(G_OBJECT(filesrc), "location", file_location, NULL);
-	//gst_object_unref(filesrc);
-
+	g_object_set(G_OBJECT(decoder), "uri", file_location, NULL);
+	// set caps for exposing only raw audio
+	GstCaps *caps = gst_caps_new_empty_simple("audio/x-raw");
+	g_object_set(G_OBJECT(decoder), "caps", caps, NULL);
+	// setting caps free
+	gst_caps_unref(caps);
+	
+	// add elements to the pipeline
+	gst_bin_add_many (GST_BIN (pipeline), decoder, converter, level_element, fakesink, NULL);
+	g_message("Elements added");
+	// link elements
+	gst_element_link_many (converter, level_element, fakesink, NULL);
+	g_signal_connect (decoder, "pad-added", G_CALLBACK (on_pad_added), converter);
+	g_message("Elements linked");
+	
 	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
 	gst_bus_add_watch(bus, bus_call, reader);
@@ -250,11 +269,11 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// unref pipeline and bus
 	gst_object_unref(GST_OBJECT(pipeline));
 	gst_object_unref(bus);
+    g_message("Business finished");
 	
-	g_message("Size: %i", g_list_length(reader->priv->readings));
-
 	// as we prepended objects, reverse list
 	reader->priv->readings = g_list_reverse(reader->priv->readings);
+	g_message("Size: %i", g_list_length(reader->priv->readings));
 
 	// return pointer to linked list
 	return reader->priv->readings;
