@@ -62,6 +62,11 @@ waveform_reader_class_init (WaveformReaderClass *klass)
   gobject_class->dispose = waveform_reader_dispose;
   gobject_class->finalize = waveform_reader_finalize;
 
+  // Check if we have already initialised Gstreamer, if not, silent warning
+  if(!gst_is_initialized ())
+		g_message("Gstreamer is not initialised, initialising");
+  gst_init(NULL, NULL);
+
   g_type_class_add_private (klass, sizeof (WaveformReaderPrivate));
 }
 
@@ -201,18 +206,33 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// Initialising GList for returning readings
 	reader->priv->readings = NULL;
 	
-	// Check if we have already initialised Gstreamer without params
-	gst_init(NULL, NULL);
-	
+	GstElement *filesrc, *decoder, *converter, *level_element, *fakesink;
 	GstElement *pipeline;
 	GstBus *bus;
+
+	pipeline = gst_pipeline_new("level-reader-pipeline");
+	filesrc = gst_element_factory_make("filesrc","file-source");
+	decoder = gst_element_factory_make("decodebin","codec-decoder");
+	converter = gst_element_factory_make("audioconvert","audio-converter");
+	level_element = gst_element_factory_make("level","level-element");
+	fakesink = gst_element_factory_make("fakesink", "fake-sink");
 	
-	pipeline = gst_parse_launch("filesrc name=src ! decodebin ! audioconvert ! level message=true name=level_element ! fakesink", NULL);
+	// FIXME return API error about problems with gstreamer core installation
+	if (!pipeline || !filesrc || !decoder || !converter || !level_element || !fakesink) {
+    g_printerr ("One element could not be created. Exiting.\n");
+    //return -1;
+	}
+
+	// add elements to the pipeline
+	gst_bin_add_many (GST_BIN (pipeline), filesrc, decoder, converter, level_element, fakesink, NULL);
+	// link elements
+	gst_element_link_many (filesrc, decoder, converter, level_element, fakesink, NULL);
 	
-	// set up element properties
+	// set up file location
+	// FIXME error if file isn't valid (not found, or can't be processed)
 	GstElement *filesrc = gst_bin_get_by_name(GST_BIN(pipeline), "src");
 	g_object_set(G_OBJECT(filesrc), "location", file_location, NULL);
-	gst_object_unref(filesrc);
+	//gst_object_unref(filesrc);
 
 	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
