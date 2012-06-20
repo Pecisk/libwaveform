@@ -113,7 +113,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 	
 	switch(GST_MESSAGE_TYPE(msg)) {
 		case GST_MESSAGE_EOS: {
-			//g_message("End of the song.");
+			g_message("End of the song.");
 			g_main_loop_quit(self->priv->loop);
 			break;
 		}
@@ -266,7 +266,8 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
     g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
-
+	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+	
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
