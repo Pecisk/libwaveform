@@ -92,7 +92,7 @@ waveform_reader_finalize (GObject *gobject)
   WaveformReader *self = WAVEFORM_READER (gobject);
 
   // free readings list when finished
-  g_list_free(self->priv->readings);
+  g_list_free_full(self->priv->readings, g_object_unref);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
