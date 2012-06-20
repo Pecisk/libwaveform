@@ -38,7 +38,9 @@ typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 
 /**
  * WaveformLevelReading:
- *
+ * @time: end time of reading in nanoseconds.
+ * @levels: #GArray of gfloat level readings for each channel.
+ * 
  * The #WaveformLevelReading structure.
  *
  * Since: 0.1
