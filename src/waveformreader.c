@@ -44,7 +44,7 @@ G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 static void
 waveform_reader_init (WaveformReader *self)
 {
-  //self->priv = WAVEFORM_READER_GET_PRIVATE (self);
+  self->priv = WAVEFORM_READER_GET_PRIVATE (self);
 
 }
 
@@ -206,7 +206,7 @@ WaveformReader * waveform_reader_new(void) {
 GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location) {
 	
 	// Creating our own context
-    self->priv->context = g_main_context_new();
+    reader->priv->context = g_main_context_new();
 	
     // Creating our own main loop
 	reader->priv->loop = g_main_loop_new(reader->priv->context, FALSE);
@@ -214,12 +214,13 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// Initialising GList for returning readings
 	reader->priv->readings = NULL;
 	
-	GstElement *filesrc, *decoder, *converter, *level_element, *fakesink;
+	GstElement *decoder, *converter, *level_element, *fakesink;
 	GstElement *pipeline;
 	GstBus *bus;
+	GSource *source;
+	guint id;
 
 	pipeline = gst_pipeline_new("level-reader-pipeline");
-	//filesrc = gst_element_factory_make("filesrc","file-source");
 	decoder = gst_element_factory_make("uridecodebin","codec-decoder");
 	converter = gst_element_factory_make("audioconvert","audio-converter");
 	level_element = gst_element_factory_make("level","level-element");
@@ -258,29 +259,31 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	g_source_set_callback (source, (GSourceFunc) gst_bus_async_signal_func, NULL, NULL);
 
 	// get id 
-    id = g_source_attach (source, ctx);
+    id = g_source_attach (source, reader->priv->context);
 	// context has source ref now
 	g_source_unref (source);
 
 	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
-    g_signal_connect (test_bus, "message::element", (GCallback) bus_call, reader);
+    g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
 
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
-	// kicking off loop
+	// kicking off our custom loop
 	g_main_loop_run(reader->priv->loop);
-
+	
 	// pausing pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
-
+	g_message("State null");
 	// unref/free all stuff
-	gst_object_unref(GST_OBJECT(pipeline));
+
 	g_source_remove (id);
-	g_object_unref(reader->priv->context);
-	g_object_unref(reader->priv->loop);
+	g_main_context_unref(reader->priv->context);
+	g_main_loop_unref(reader->priv->loop);
+
 	gst_object_unref(bus);
+	gst_object_unref(GST_OBJECT(pipeline));
     g_message("Business finished");
 	
 	// as we prepended objects, reverse list
