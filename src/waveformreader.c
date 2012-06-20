@@ -46,11 +46,14 @@ waveform_reader_init (WaveformReader *self)
 {
   self->priv = WAVEFORM_READER_GET_PRIVATE (self);
 
-  // at the beginging initialise them to NULL
-  // FIXME maybe shouldn't be done at all?
-  self->priv->reading = NULL;
-  self->priv->readings = NULL;
+  // FIXME should be context created here?
   self->priv->context = g_main_context_new();
+
+  // Check if we have already initialised Gstreamer, if not, silent warning
+  if(!gst_is_initialized ())
+		g_message("Gstreamer is not initialised, initialising");
+  gst_init(NULL, NULL);
+
 }
 
 // class initialisation
@@ -61,11 +64,6 @@ waveform_reader_class_init (WaveformReaderClass *klass)
 
   gobject_class->dispose = waveform_reader_dispose;
   gobject_class->finalize = waveform_reader_finalize;
-
-  // Check if we have already initialised Gstreamer, if not, silent warning
-  if(!gst_is_initialized ())
-		g_message("Gstreamer is not initialised, initialising");
-  gst_init(NULL, NULL);
 
   g_type_class_add_private (klass, sizeof (WaveformReaderPrivate));
 }
