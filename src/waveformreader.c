@@ -49,11 +49,6 @@ waveform_reader_init (WaveformReader *self)
   // FIXME should be context created here?
   self->priv->context = g_main_context_new();
 
-  // Check if we have already initialised Gstreamer, if not, silent warning
-  if(!gst_is_initialized ())
-		g_message("Gstreamer is not initialised, initialising");
-  gst_init(NULL, NULL);
-
 }
 
 // class initialisation
@@ -65,6 +60,11 @@ waveform_reader_class_init (WaveformReaderClass *klass)
   gobject_class->dispose = waveform_reader_dispose;
   gobject_class->finalize = waveform_reader_finalize;
 
+  // Check if we have already initialised Gstreamer, if not, silent warning
+  if(!gst_is_initialized ())
+		g_message("Gstreamer is not initialised, initialising");
+  gst_init(NULL, NULL);
+	
   g_type_class_add_private (klass, sizeof (WaveformReaderPrivate));
 }
 
@@ -209,7 +209,7 @@ WaveformReader * waveform_reader_new(void) {
 GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location) {
 	
 	// We already have created GMainContext as reader->priv->context, use it as default for a thread
-	g_main_context_push_thread_default(reader->priv->context);
+	// g_main_context_push_thread_default(reader->priv->context);
 
     // Create main loop
 	reader->priv->loop = g_main_loop_new(reader->priv->context, FALSE);
@@ -253,7 +253,20 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	
 	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-	gst_bus_add_watch(bus, bus_call, reader);
+
+	// get GSource of bus
+	source = gst_bus_create_watch (bus);
+
+	g_source_set_callback (source, (GSourceFunc) gst_bus_async_signal_func, NULL, NULL);
+	
+    id = g_source_attach (source, ctx);
+    g_source_unref (source);
+
+	// FIXME fail_if (id == 0);
+
+    g_signal_connect (test_bus, "message::element", (GCallback) bus_call, reader);
+	
+	//gst_bus_add_watch(bus, bus_call, reader);
 
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
@@ -266,6 +279,9 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// unref pipeline and bus
 	gst_object_unref(GST_OBJECT(pipeline));
+	g_source_remove (id);
+	g_object_unref(reader->priv->context);
+	g_object_unref(reader->priv->loop);
 	gst_object_unref(bus);
     g_message("Business finished");
 	
