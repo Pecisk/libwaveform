@@ -44,10 +44,7 @@ G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
 static void
 waveform_reader_init (WaveformReader *self)
 {
-  self->priv = WAVEFORM_READER_GET_PRIVATE (self);
-
-  // FIXME should be context created here?
-  self->priv->context = g_main_context_new();
+  //self->priv = WAVEFORM_READER_GET_PRIVATE (self);
 
 }
 
@@ -208,10 +205,10 @@ WaveformReader * waveform_reader_new(void) {
 
 GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location) {
 	
-	// We already have created GMainContext as reader->priv->context, use it as default for a thread
-	// g_main_context_push_thread_default(reader->priv->context);
-
-    // Create main loop
+	// Creating our own context
+    self->priv->context = g_main_context_new();
+	
+    // Creating our own main loop
 	reader->priv->loop = g_main_loop_new(reader->priv->context, FALSE);
 
 	// Initialising GList for returning readings
@@ -257,16 +254,17 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// get GSource of bus
 	source = gst_bus_create_watch (bus);
 
+	// set helper function so ansync messages would be converted to signals
 	g_source_set_callback (source, (GSourceFunc) gst_bus_async_signal_func, NULL, NULL);
-	
-    id = g_source_attach (source, ctx);
-    g_source_unref (source);
 
-	// FIXME fail_if (id == 0);
+	// get id 
+    id = g_source_attach (source, ctx);
+	// context has source ref now
+	g_source_unref (source);
+
+	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
     g_signal_connect (test_bus, "message::element", (GCallback) bus_call, reader);
-	
-	//gst_bus_add_watch(bus, bus_call, reader);
 
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
@@ -277,7 +275,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// pausing pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 
-	// unref pipeline and bus
+	// unref/free all stuff
 	gst_object_unref(GST_OBJECT(pipeline));
 	g_source_remove (id);
 	g_object_unref(reader->priv->context);
