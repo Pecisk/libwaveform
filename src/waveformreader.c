@@ -112,6 +112,25 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 	WaveformReader *self = WAVEFORM_READER ((GObject*)user_data);
 	
 	switch(GST_MESSAGE_TYPE(msg)) {
+		case GST_MESSAGE_ERROR: {
+		GError *err = NULL;
+		gchar *dbg_info = NULL;
+		
+		gst_message_parse_error (msg, &err, &dbg_info);
+		//g_printerr ("ERROR from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message);
+		//g_printerr ("Debugging info: %s\n", (dbg_info) ? dbg_info : "none");
+		
+		// FIXME handle well known errors and report it correctly to user
+		if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0)
+			g_message("Stream provided by URI not found.");
+		// can't decode
+		// don't have audio
+		// default
+		g_error_free (err);
+		g_free (dbg_info);
+		g_main_loop_quit(self->priv->loop);
+		break;	
+		}
 		case GST_MESSAGE_EOS: {
 			g_message("End of the song.");
 			g_main_loop_quit(self->priv->loop);
@@ -265,8 +284,12 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
+	// catch element messages for 'level'
     g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
+	// catch eos messages for stream end
 	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+	// catch errors in bus
+	g_signal_connect (bus, "message::error", (GCallback) bus_call, reader);
 	
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
