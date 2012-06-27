@@ -20,46 +20,61 @@
 #include <glib-object.h>
 #include "waveformlevelreading.h"
 
-G_DEFINE_TYPE (WaveformLevelReading, waveform_level_reading, G_TYPE_OBJECT);
+G_DEFINE_BOXED_TYPE (WaveformLevelReading, waveform_level_reading, waveform_level_reading_ref, waveform_level_reading_unref);
 
-static void waveform_level_reading_dispose (GObject *gobject);
-static void waveform_level_reading_finalize (GObject *gobject);
+// FIXME implement refcount variable, and ref and unref functions
 
-static void
-waveform_level_reading_class_init (WaveformLevelReadingClass *klass)
+WaveformLevelReading *  waveform_level_reading_ref		(WaveformLevelReading *reading);
+void					waveform_level_reading_unref	(WaveformLevelReading *reading);
+
+WaveformLevelReading *
+waveform_level_reading_ref (WaveformLevelReading * reading)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  g_return_val_if_fail (reading != NULL, NULL);
+  /* we can't assert that the refcount > 0 since the _free functions
+   * increments the refcount from 0 to 1 again to allow resurecting
+   * the object
+   g_return_val_if_fail (mini_object->refcount > 0, NULL);
+   */
+	reading->refcount = reading->refcount + 1;
 
-  gobject_class->dispose = waveform_level_reading_dispose;
-  gobject_class->finalize = waveform_level_reading_finalize;
+  g_atomic_int_inc (&reading->refcount);
 
+  return reading;
 }
 
-static void
-waveform_level_reading_init (WaveformLevelReading *self)
+void
+gst_mini_object_unref (GstMiniObject * mini_object)
 {
-  self->time = 0;
-  self->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
+  g_return_if_fail (mini_object != NULL);
+
+  GST_CAT_TRACE (GST_CAT_REFCOUNTING, "%p unref %d->%d",
+      mini_object,
+      GST_MINI_OBJECT_REFCOUNT_VALUE (mini_object),
+      GST_MINI_OBJECT_REFCOUNT_VALUE (mini_object) - 1);
+
+  g_return_if_fail (mini_object->refcount > 0);
+
+  if (G_UNLIKELY (g_atomic_int_dec_and_test (&mini_object->refcount))) {
+    gboolean do_free;
+
+    if (mini_object->dispose)
+      do_free = mini_object->dispose (mini_object);
+    else
+      do_free = TRUE;
+
+    /* if the subclass recycled the object (and returned FALSE) we don't
+     * want to free the instance anymore */
+    if (G_LIKELY (do_free)) {
+      /* The weak reference stack is freed in the notification function */
+      if (mini_object->n_weak_refs)
+        weak_refs_notify (mini_object);
+
+#ifndef GST_DISABLE_TRACE
+      _gst_alloc_trace_free (_gst_mini_object_trace, mini_object);
+#endif
+      if (mini_object->free)
+        mini_object->free (mini_object);
+    }
+  }
 }
-
-static void
-waveform_level_reading_dispose (GObject *gobject)
-{
-  //WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
-	
-  /* Chain up to the parent class */
-  G_OBJECT_CLASS (waveform_level_reading_parent_class)->dispose (gobject);
-}
-
-static void
-waveform_level_reading_finalize (GObject *gobject)
-{
-  WaveformLevelReading *self = WAVEFORM_LEVEL_READING (gobject);
-
-	// FIXME should I free all of it? I think yes - when we release it, we release it
-	g_array_free(self->levels, TRUE);
-		
-  /* Chain up to the parent class */
-  G_OBJECT_CLASS (waveform_level_reading_parent_class)->finalize (gobject);
-}
-

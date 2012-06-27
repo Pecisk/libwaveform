@@ -26,15 +26,12 @@
 /*
  * Type macros.
  */
+
 #define WAVEFORM_TYPE_LEVEL_READING     (waveform_level_reading_get_type ())
-#define WAVEFORM_LEVEL_READING(obj)     (G_TYPE_CHECK_INSTANCE_CAST ((obj), WAVEFORM_TYPE_LEVEL_READING, WaveformLevelReading))
-#define WAVEFORM_IS_LEVEL_READING(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WAVEFORM_TYPE_LEVEL_READING))
-#define WAVEFORM_LEVEL_READING_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), WAVEFORM_TYPE_LEVEL_READING, WaveformLevelReadingClass))
-#define WAVEFORM_IS_LEVEL_READING_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), WAVEFORM_TYPE_LEVEL_READING))
-#define WAVEFORM_LEVEL_READING_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), WAVEFORM_TYPE_LEVEL_READING, WaveformLevelReadingClass))
+#define WAVEFORM_LEVEL_READING_REFCOUNT(obj)           (((WaveformLevelReading*)(obj))->refcount)
+#define WAVEFORM_LEVEL_READING_REFCOUNT_VALUE(obj)     (g_atomic_int_get (&((WaveformLevelReading*)(obj))->refcount))
 
 typedef struct _WaveformLevelReading        WaveformLevelReading;
-typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 
 /**
  * WaveformLevelReading:
@@ -48,17 +45,16 @@ typedef struct _WaveformLevelReadingClass   WaveformLevelReadingClass;
 
 struct _WaveformLevelReading
 {
-  GObject parent_instance;
+  GType type;
 
-  /* instance members */
-  guint64 time;
+  /*< public >*/
+  gint refcount;
+
+  guint64 start_time;
+  guint64 end_time;
   GArray *levels;
-};
-
-struct _WaveformLevelReadingClass
-{
-  GObjectClass parent_class;
-  /* class members */
+  
+  
 };
 
 GType waveform_level_reading_get_type (void);
