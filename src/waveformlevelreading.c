@@ -47,34 +47,9 @@ void
 gst_mini_object_unref (GstMiniObject * mini_object)
 {
   g_return_if_fail (mini_object != NULL);
-
-  GST_CAT_TRACE (GST_CAT_REFCOUNTING, "%p unref %d->%d",
-      mini_object,
-      GST_MINI_OBJECT_REFCOUNT_VALUE (mini_object),
-      GST_MINI_OBJECT_REFCOUNT_VALUE (mini_object) - 1);
-
+	reading->refcount = reading->refcount - 1;
   g_return_if_fail (mini_object->refcount > 0);
-
-  if (G_UNLIKELY (g_atomic_int_dec_and_test (&mini_object->refcount))) {
-    gboolean do_free;
-
-    if (mini_object->dispose)
-      do_free = mini_object->dispose (mini_object);
-    else
-      do_free = TRUE;
-
-    /* if the subclass recycled the object (and returned FALSE) we don't
-     * want to free the instance anymore */
-    if (G_LIKELY (do_free)) {
-      /* The weak reference stack is freed in the notification function */
-      if (mini_object->n_weak_refs)
-        weak_refs_notify (mini_object);
-
-#ifndef GST_DISABLE_TRACE
-      _gst_alloc_trace_free (_gst_mini_object_trace, mini_object);
-#endif
-      if (mini_object->free)
-        mini_object->free (mini_object);
+	//FIXME what happens after we have reached 0 refs
     }
   }
 }
