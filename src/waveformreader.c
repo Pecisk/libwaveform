@@ -151,8 +151,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			//number_of_samples++;
 
 			// creating new WaveformLevelReading for storing reading values
-			self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
-			
+			//self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
+			WaveformLevelReading * self->priv->reading = WAVEFORM_LEVEL_READING;
 			// get value list of channel median power
 			const GValue *list_value = gst_structure_get_value(st, "rms");
 			GValueArray *rms_list = (GValueArray *) g_value_get_boxed(list_value);
@@ -350,6 +350,6 @@ guint64 get_start_time(WaveformLevelReading * reading) {
  *
  * Since: 0.1
  */
-GArray get_channel_readings(WaveformLevelReading * reading) {
+GArray * get_channel_readings(WaveformLevelReading * reading) {
 	return reading->levels;
 }

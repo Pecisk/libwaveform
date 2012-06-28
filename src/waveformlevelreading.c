@@ -25,8 +25,6 @@ G_DEFINE_BOXED_TYPE (WaveformLevelReading, waveform_level_reading, waveform_leve
 GType waveform_level_reading_get_type (void);
 // FIXME implement refcount variable, and ref and unref functions
 
-
-
 WaveformLevelReading *
 waveform_level_reading_ref (WaveformLevelReading * reading)
 {

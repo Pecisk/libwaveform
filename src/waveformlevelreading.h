@@ -28,6 +28,8 @@
  */
 
 #define WAVEFORM_TYPE_LEVEL_READING     (waveform_level_reading_get_type ())
+#define WAVEFORM_LEVEL_READING(obj)     (G_TYPE_CHECK_INSTANCE_CAST ((obj), WAVEFORM_LEVEL_READING, WaveformLevelReading))
+#define WAVEFORM_IS_READER(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), WAVEFORM_TYPE_READER))
 #define WAVEFORM_LEVEL_READING_REFCOUNT(obj)           (((WaveformLevelReading*)(obj))->refcount)
 #define WAVEFORM_LEVEL_READING_REFCOUNT_VALUE(obj)     (g_atomic_int_get (&((WaveformLevelReading*)(obj))->refcount))
 
