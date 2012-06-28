@@ -170,8 +170,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// Set end time of the buffer as time of the reading
 			const GValue *stream_time = gst_structure_get_value(st, "stream-time");
 			const GValue *duration = gst_structure_get_value(st, "duration");
-			self->priv->reading->time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
-			
+			self->priv->reading->end_time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
+			self->priv->reading->start_time = (guint64)g_value_get_uint64(stream_time);
 			
 			// Initialise GArray for storing levels for each channel
 			// reading->levels should be already initialised with creation of WaveformLevelReading

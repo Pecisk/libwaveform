@@ -60,7 +60,10 @@ struct _WaveformLevelReading
 GType waveform_level_reading_get_type (void);
 
 /*
- * Method definitions.
- */
+* Method definitions.
+*/
+
+WaveformLevelReading *  waveform_level_reading_ref		(WaveformLevelReading *reading);
+void					waveform_level_reading_unref	(WaveformLevelReading *reading);
 
 #endif /* __WAVEFORM_LEVEL_READING_H__ */

@@ -22,10 +22,10 @@
 
 G_DEFINE_BOXED_TYPE (WaveformLevelReading, waveform_level_reading, waveform_level_reading_ref, waveform_level_reading_unref);
 
+GType waveform_level_reading_get_type (void);
 // FIXME implement refcount variable, and ref and unref functions
 
-WaveformLevelReading *  waveform_level_reading_ref		(WaveformLevelReading *reading);
-void					waveform_level_reading_unref	(WaveformLevelReading *reading);
+
 
 WaveformLevelReading *
 waveform_level_reading_ref (WaveformLevelReading * reading)
@@ -44,12 +44,10 @@ waveform_level_reading_ref (WaveformLevelReading * reading)
 }
 
 void
-gst_mini_object_unref (GstMiniObject * mini_object)
+waveform_level_reading_unref (WaveformLevelReading * reading)
 {
-  g_return_if_fail (mini_object != NULL);
+  g_return_if_fail (reading != NULL);
 	reading->refcount = reading->refcount - 1;
-  g_return_if_fail (mini_object->refcount > 0);
+  g_return_if_fail (reading->refcount > 0);
 	//FIXME what happens after we have reached 0 refs
-    }
-  }
 }
