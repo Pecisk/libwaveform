@@ -317,3 +317,39 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// return pointer to linked list
 	return reader->priv->readings;
 }
+
+/**
+ * get_end_time:
+ * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
+ *
+ * Returns: (transfer full): #guint64 of end time of level reading buffer in nanoseconds. 
+ *
+ * Since: 0.1
+ */
+guint64 get_end_time(WaveformLevelReading * reading) {
+	return reading->end_time;
+}
+
+/**
+ * get_start_time:
+ * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
+ *
+ * Returns: (transfer full): #guint64 of start time of level reading buffer in nanoseconds. 
+ *
+ * Since: 0.1
+ */
+guint64 get_start_time(WaveformLevelReading * reading) {
+	return reading->start_time;
+}
+
+/**
+ * get_channel_readings:
+ * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
+ *
+ * Returns: (transfer full) (element-type float): The #GArray of level readings by channel.
+ *
+ * Since: 0.1
+ */
+GArray get_channel_readings(WaveformLevelReading * reading) {
+	return reading->levels;
+}
