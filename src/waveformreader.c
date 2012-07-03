@@ -87,7 +87,7 @@ waveform_reader_finalize (GObject *gobject)
   WaveformReader *self = WAVEFORM_READER (gobject);
 
   // free readings list when finished
-  g_list_free_full(self->priv->readings, g_object_unref);
+  g_list_free_full(self->priv->readings, waveform_level_reading_unref);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (waveform_reader_parent_class)->finalize (gobject);
@@ -152,7 +152,9 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 			// creating new WaveformLevelReading for storing reading values
 			//self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
-			WaveformLevelReading * self->priv->reading = WAVEFORM_LEVEL_READING;
+			WaveformLevelReading reading = {1, 0, 0, NULL};
+			self->priv->reading = &reading;
+			
 			// get value list of channel median power
 			const GValue *list_value = gst_structure_get_value(st, "rms");
 			GValueArray *rms_list = (GValueArray *) g_value_get_boxed(list_value);
@@ -187,7 +189,9 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
+			//g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
+			
 		}
 		default:
 			break;
@@ -217,7 +221,7 @@ WaveformReader * waveform_reader_new(void) {
  *
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
- * Returns: (transfer container) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
+ * Returns: (transfer full) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
  *
  * Since: 0.1
  */
@@ -318,38 +322,41 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	return reader->priv->readings;
 }
 
+
 /**
- * get_end_time:
+ * waveform_reader_get_end_time:
  * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
  *
  * Returns: (transfer full): #guint64 of end time of level reading buffer in nanoseconds. 
  *
  * Since: 0.1
  */
-guint64 get_end_time(WaveformLevelReading * reading) {
+guint64 waveform_reader_get_end_time (WaveformLevelReading * reading) {
+//	g_message("End time: %lld\n", (guint64)reading->end_time);
 	return reading->end_time;
 }
 
 /**
- * get_start_time:
+ * waveform_reader_get_start_time:
  * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
  *
  * Returns: (transfer full): #guint64 of start time of level reading buffer in nanoseconds. 
  *
  * Since: 0.1
  */
-guint64 get_start_time(WaveformLevelReading * reading) {
+guint64 waveform_reader_get_start_time (WaveformLevelReading * reading) {
+//	g_message("Start time: %lld\n", (guint64)reading->start_time);
 	return reading->start_time;
 }
 
 /**
- * get_channel_readings:
+ * waveform_reader_get_channel_readings:
  * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
  *
  * Returns: (transfer full) (element-type float): The #GArray of level readings by channel.
  *
  * Since: 0.1
  */
-GArray * get_channel_readings(WaveformLevelReading * reading) {
+GArray * waveform_reader_get_channel_readings (WaveformLevelReading * reading) {
 	return reading->levels;
 }

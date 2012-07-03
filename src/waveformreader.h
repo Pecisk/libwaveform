@@ -61,7 +61,6 @@ struct _WaveformReaderClass
   GObjectClass parent_class;
 
   /* class members */
-  //static GMainLoop *loop;
 };
 
 GType waveform_reader_get_type (void);
@@ -71,5 +70,8 @@ GType waveform_reader_get_type (void);
  */
 GList *	waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location);
 WaveformReader * waveform_reader_new(void);
+guint64 waveform_reader_get_start_time (WaveformLevelReading * reading);
+guint64 waveform_reader_get_end_time (WaveformLevelReading * reading);
+GArray * waveform_reader_get_channel_readings (WaveformLevelReading * reading);
 
 #endif /* __WAVEFORM_READER_H__ */
