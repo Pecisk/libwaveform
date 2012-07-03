@@ -73,8 +73,8 @@ waveform_reader_dispose (GObject *gobject)
 
   if (self->priv->reading)
     {
-      g_object_unref (self->priv->reading);
-      self->priv->reading = NULL;
+	  waveform_level_reading_unref(self->priv->reading);
+	  self->priv->reading = NULL;
     }
 
   /* Chain up to the parent class */
@@ -152,8 +152,9 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 
 			// creating new WaveformLevelReading for storing reading values
 			//self->priv->reading = g_object_new(WAVEFORM_TYPE_LEVEL_READING, NULL);
-			WaveformLevelReading reading = {1, 0, 0, NULL};
-			self->priv->reading = &reading;
+			//WaveformLevelReading reading = {1, 0, 0, NULL};
+			//self->priv->reading = &reading;
+			self->priv->reading = waveform_level_reading_new();
 			
 			// get value list of channel median power
 			const GValue *list_value = gst_structure_get_value(st, "rms");
@@ -176,8 +177,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			self->priv->reading->start_time = (guint64)g_value_get_uint64(stream_time);
 			
 			// Initialise GArray for storing levels for each channel
-			// reading->levels should be already initialised with creation of WaveformLevelReading
-			//reading->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
+			//self->priv->reading->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
 			
 			int i;
 			for(i=0;i<channels;i++) {
@@ -189,7 +189,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
-			//g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
+			g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			
 		}
@@ -221,7 +221,7 @@ WaveformReader * waveform_reader_new(void) {
  *
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
- * Returns: (transfer full) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
+ * Returns: (transfer none) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
  *
  * Since: 0.1
  */

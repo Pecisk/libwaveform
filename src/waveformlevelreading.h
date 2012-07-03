@@ -47,11 +47,8 @@ typedef struct _WaveformLevelReading        WaveformLevelReading;
 
 struct _WaveformLevelReading
 {
-  GType type;
-
   /*< public >*/
   gint refcount;
-
   guint64 start_time;
   guint64 end_time;
   GArray *levels;
