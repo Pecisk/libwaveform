@@ -13,7 +13,8 @@ lib_LTLIBRARIES = libwaveform-@LIBWAVEFORM_API_VERSION@.la
 
 libwaveform_@LIBWAVEFORM_API_VERSION@_la_SOURCES = \
 	waveformreader.c\
-	waveformlevelreading.c
+	waveformlevelreading.c\
+    waveformdata.c
 
 libwaveform_@LIBWAVEFORM_API_VERSION@_la_LDFLAGS = 
 
@@ -22,10 +23,11 @@ libwaveform_@LIBWAVEFORM_API_VERSION@_la_LIBADD = $(LIBWAVEFORM_LIBS)
 include_HEADERS = \
 	waveform.h\
     waveformreader.h\
-    waveformlevelreading.h
+    waveformlevelreading.h\
+    waveformdata.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libwaveform-0.1.pc
+pkgconfig_DATA = libwaveform-@LIBWAVEFORM_API_VERSION@.pc
 
 EXTRA_DIST = \
 	libwaveform-0.1.pc.in
