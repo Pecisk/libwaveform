@@ -52,7 +52,7 @@ struct _WaveformLevelReading
   guint64 start_time;
   guint64 end_time;
   GArray *levels;
-  
+  GPtrArray *subreadings;
   
 };
 

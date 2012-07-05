@@ -52,6 +52,7 @@ WaveformLevelReading * waveform_level_reading_new (void)
 	reading->start_time = 0;
 	reading->end_time = 0;
 	reading->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
-
+	// initialise subreadings with g_ptr_array_new only then when neccessary
+	reading->subreadings = NULL;
 	return reading;
 }

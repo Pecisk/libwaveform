@@ -23,10 +23,17 @@ libwaveform is free software: you can redistribute it and/or modify it
 
 struct _WaveformDataPrivate
 {
-  GList *data;
+  // pointer to data structure
+  GList *readings;
+  // Current active element of rough reading 
+  GList *active_rough;
+  // Current active element of detailed reading of the list you process
+  GList *active_detailed;
 };
 
 G_DEFINE_TYPE (WaveformData, waveform_data, G_TYPE_OBJECT);
+
+void add_each_reading(gpointer data, gpointer user_data);
 
 static void
 waveform_data_init (WaveformData *waveform_data)
@@ -51,45 +58,146 @@ waveform_data_class_init (WaveformDataClass *klass)
 	object_class->finalize = waveform_data_finalize;
 }
 
+/**
+ * waveform_data_new:
+ *
+ * Creates #WaveformData which holds audio level information in data structure.
+ *
+ * Returns: (transfer full): The new #WaveformData
+ *
+ * Since: 0.1
+ */
+
+WaveformData * waveform_data_new(void) {
+	return g_object_new(WAVEFORM_TYPE_DATA, NULL);
+}
+
+/**
+ * waveform_data_add:
+ * @self: pointer to #WaveformData object which holds audio level information in data structure.
+ * @readings: a pointer to a #GList of readings from waveform_reader_get_levels.
+ *
+ * Adds list of #WaveformLevelReading to #WaveformData structure.
+ *
+ * Returns: #gboolean value of success or failure of adding level readings to #WaveformData structure.
+ *
+ * Since: 0.1
+ */
 
 gboolean
-waveform_data_add (WaveformData *model, GList *readings)
+waveform_data_add (WaveformData *self, GList *readings)
 {
 	// If there is no data, just copy it
 	// FIXME do we expect just to copy pointer? Deep copying
 	// would require implementation of copy function for WaveformLevelReading
-	if(model->priv->data == NULL)
-		model->priv->data = &readings;
+	if(self->priv->readings == NULL)
+		self->priv->readings = &readings;
 		return TRUE;
 	else {
 		// if there is already data here, investigate
 		// first compare two linked elements and their time deltas
-		GList first = g_list_first(model->priv->data);
-		WaveformLevelReading readfirst = WAVEFORM_LEVEL_READING(first->data);
-		guint64 old_data_period = readfirst->start_time - readfirst->end_time; 
+		GList base = g_list_first(self->priv->readings);
+		WaveformLevelReading read_base = WAVEFORM_LEVEL_READING(base->data);
+		guint64 base_period = read_base->end_time - read_base->start_time; 
 
-		GList second = g_list_first(readings);
-		WaveformLevelReading readsecond = WAVEFORM_LEVEL_READING(second->data);
-		guint64 new_data_period = readsecond->start_time - readsecond->end_time;
+		GList new = g_list_first(readings);
+		WaveformLevelReading read_new = WAVEFORM_LEVEL_READING(new->data);
+		guint64 new_period = read_new->end_time - read_new->start_time;
 
-		if(readfirst % readsecond == 0)
+		if(base_period % new_period == 0)
 		{
 			// do a modulo to see if it's worth even to look at it
 			// if there's leftovers, readsecond doesn't fit n=integer times
-			if(readfirst/readsecond == 1)
+			if(base_period/new_period == 1)
 			{
 				// FIXME if they are with equal period, copy over
 				// could have option that if there is equal period, you could
 				// ignore it like now or copy over
+				// anyway, we done here, and operation is success
 				return TRUE;
 			} else {
 				// readsecond fits in readfirst, and they are not equal
-				// FIXME so we should insert those data
-				
+				// so we insert those data
+				g_list_foreach(readings, add_each_reading, model);
+				return TRUE;
 			}
 
-		}
+		} else
+		return FALSE;
 	}
+	// end of waveform_data_add
+}
 
-	/* TODO: Add public function implementation here */
+void add_each_reading(gpointer data, gpointer user_data) {
+	// first, let's get out pointers
+	WaveformLevelReading *reading = WAVEFORM_LEVEL_READING (data);
+	WaveformData *self = WAVEFORM_DATA ((GObject*)user_data);
+
+	// at the beginging model->priv->active_rough is NULL, get actual
+	// first element of the list from model->priv->readings
+	if(self->priv->active_rough == NULL)
+		self->priv->active_rough = g_list_first(self->priv->readings);
+	
+	// let's get current active rough reading and see if detailed reading
+	// fits there. If not, iterate to next and nullify active_detailed
+
+	// need to initialise it first for while check
+	WaveformLevelReading *rough_reading = NULL;
+
+	{
+	rough_reading = WAVEFORM_LEVEL_READING(self->priv->active_rough->data);
+	
+	// if reading doesn't fit in rough_reading, iterate to next element in list
+	// and nullify active_detailed as we are in new rough period
+	if(!(rough_reading->start_time =< reading->start_time && reading->end_time =< rough_reading->end_time))
+		{
+			self->priv->active_rough = g_list_next(self->priv->active_rough);
+			self->priv->active_detailed = NULL;
+		}
+	} while(!(rough_reading->start_time =< reading->start_time && reading->end_time =< rough_reading->end_time));
+	
+	// check if we have active_detailed shortcut, because if it's there,
+	// activated, because we don't need to lookup where to put it
+	if(self->priv->active_detailed != NULL) {
+		// just add reading to active detailed subreading list
+		self->priv->active_detailed = g_list_prepend(self->priv->active_detailed, reading); 
+	} else {
+		// if you don't know where to store it, find it out
+		// if there is no subreadings pointer array, create it
+		// and add reading to newly created list
+		if(self->priv->active_rough->subreadings == NULL)
+			{
+				// if subreadings are NULL, create it, create new GList and add it
+				self->priv->active_rough->subreadings = g_ptr_array_new();
+				GList *new_subreadings_list = g_list_new(NULL, NULL, sizeof(WaveformLevelReading));
+				new_subreadings_list = g_list_append(new_subreadings_list, reading);
+				g_ptr_array_add(self->priv->subreadings, (gpointer)new_subreadings_list);
+				// define new list as active_detailed
+				self->priv->active_detailed = new_subreadings_list;
+			} else {
+				// if subreadings has something, first let's go trough
+				// all lists it has to see if someone fits. This shouldn't
+				// happen generally as we don't expect incomplete subreading
+				// lists, but in case...
+				for(int i=0;i<self->priv->active_rough->subreadings->len;i++)
+					{
+						GList temp_list = (GList*)g_ptr_array_index(self->priv->active_rough->subreadings,i);
+						WaveformLevelReading temp_reading = WAVEFORM_LEVEL_READING(temp_list->data);
+						// if equal, this is right list, prepend reading and make active_detailed as new default
+						if((temp_reading->end_time - temp_reading->start_time) == (reading->end_time - reading->start_time)) {
+							self->priv->active_detailed = g_list_prepend(temp_list, reading);
+							break;
+						}
+					}
+				// if active_detailed still NULL, that means default action - create new list and append reading
+				if(self->priv->active_detailed == NULL) {
+					GList *new_subreadings_list = g_list_new(NULL, NULL, sizeof(WaveformLevelReading));
+					new_subreadings_list = g_list_append(new_subreadings_list, reading);
+					g_ptr_array_add(self->priv->subreadings, (gpointer)new_subreadings_list);
+					// define new list as active_detailed
+					self->priv->active_detailed = new_subreadings_list;
+				}
+			}	
+			
+	}
 }
