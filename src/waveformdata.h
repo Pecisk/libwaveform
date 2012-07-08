@@ -20,7 +20,7 @@ libwaveform is free software: you can redistribute it and/or modify it
 #ifndef _WAVEFORMDATA_H_
 #define _WAVEFORMDATA_H_
 
-#include <gobject.h>
+#include <glib-object.h>
 #include "waveformlevelreading.h"
 
 G_BEGIN_DECLS

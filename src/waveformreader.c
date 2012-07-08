@@ -131,7 +131,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 		g_main_loop_quit(self->priv->loop);
 		break;	
 		}
-		case GST_SEGMENT_DONE: {
+		case GST_MESSAGE_SEGMENT_DONE: {
 			g_message("End of the fragment");
 			g_main_loop_quit(self->priv->loop);
 			break;
@@ -223,9 +223,9 @@ WaveformReader * waveform_reader_new(void) {
  * waveform_reader_get_levels:
  * @reader: pointer to #WaveformReader object which reads levels.
  * @file_location: a pointer to a #gchar array to file location.
- * @period: #guint64 of level reading period, if zero, then 0.1 s (as 120 000 000 ns) period is used by default.
+ * @interval: #guint64 of level reading period, if zero, then 0.1 s (as 120 000 000 ns) period is used by default.
  * @start: #guint64 of start of reading period in ns
- * @end: #guint64 of end of reading period in ns
+ * @finish: #guint64 of end of reading period in ns
  * 
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
