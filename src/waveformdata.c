@@ -39,6 +39,8 @@ static void
 waveform_data_init (WaveformData *waveform_data)
 {
 	self->priv = WAVEFORM_DATA_GET_PRIVATE (self);
+	self->priv->active_rough = NULL;
+	self->priv->active_detailed = NULL;
 }
 
 static void
@@ -107,7 +109,7 @@ waveform_data_add (WaveformData *self, GList *readings)
 		if(base_period % new_period == 0)
 		{
 			// do a modulo to see if it's worth even to look at it
-			// if there's leftovers, readsecond doesn't fit n=integer times
+			// if there's leftovers, read_new doesn't fit n=integer times
 			if(base_period/new_period == 1)
 			{
 				// FIXME if they are with equal period, copy over
@@ -124,6 +126,7 @@ waveform_data_add (WaveformData *self, GList *readings)
 
 		} else
 		return FALSE;
+		// read_new doesn't fit in read_base fully, so we can't put it there
 	}
 	// end of waveform_data_add
 }
@@ -157,7 +160,7 @@ void add_each_reading(gpointer data, gpointer user_data) {
 	} while(!(rough_reading->start_time =< reading->start_time && reading->end_time =< rough_reading->end_time));
 	
 	// check if we have active_detailed shortcut, because if it's there,
-	// activated, because we don't need to lookup where to put it
+	// activated, then we don't need to lookup where to put it
 	if(self->priv->active_detailed != NULL) {
 		// just add reading to active detailed subreading list
 		self->priv->active_detailed = g_list_prepend(self->priv->active_detailed, reading); 

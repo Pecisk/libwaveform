@@ -131,6 +131,11 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 		g_main_loop_quit(self->priv->loop);
 		break;	
 		}
+		case GST_SEGMENT_DONE: {
+			g_message("End of the fragment");
+			g_main_loop_quit(self->priv->loop);
+			break;
+		}
 		case GST_MESSAGE_EOS: {
 			g_message("End of the song.");
 			g_main_loop_quit(self->priv->loop);
@@ -218,7 +223,10 @@ WaveformReader * waveform_reader_new(void) {
  * waveform_reader_get_levels:
  * @reader: pointer to #WaveformReader object which reads levels.
  * @file_location: a pointer to a #gchar array to file location.
- *
+ * @period: #guint64 of level reading period, if zero, then 0.1 s (as 120 000 000 ns) period is used by default.
+ * @start: #guint64 of start of reading period in ns
+ * @end: #guint64 of end of reading period in ns
+ * 
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
  * Returns: (transfer none) (element-type Waveform.LevelReading): The new #GList of #WaveformLevelReading
@@ -226,7 +234,7 @@ WaveformReader * waveform_reader_new(void) {
  * Since: 0.1
  */
 
-GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location) {
+GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish) {
 	
 	// Creating our own context
     reader->priv->context = g_main_context_new();
@@ -263,6 +271,9 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	g_object_set(G_OBJECT(decoder), "caps", caps, NULL);
 	// setting caps free
 	gst_caps_unref(caps);
+	// setting interval if it's not zero, otherwise use default
+	if(interval != 0)
+		g_object_set(G_OBJECT(level_element), "interval", interval, NULL);
 	
 	// add elements to the pipeline
 	gst_bin_add_many (GST_BIN (pipeline), decoder, converter, level_element, fakesink, NULL);
@@ -290,11 +301,24 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// catch element messages for 'level'
     g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
-	// catch eos messages for stream end
-	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+
 	// catch errors in bus
 	g_signal_connect (bus, "message::error", (GCallback) bus_call, reader);
-	
+
+	if(finish != 0) 
+		{
+			// do seeking if finish is not zero
+			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_SEGMENT|GST_SEEK_FLAG_ACCURATE,
+                         GST_SEEK_TYPE_SET, start,
+                         GST_SEEK_TYPE_SET, finish);
+			// catch segment done messages
+			g_signal_connect (bus, "message::segment-done", (GCallback) bus_call, reader);
+		} else {
+			// if not seeking, 
+			// catch eos messages for stream end
+			g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+		}
+
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
