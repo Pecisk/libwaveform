@@ -310,6 +310,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	if(finish != 0) 
 		{
+			g_message("Doing seeking %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT"\n", start, finish);
 			// do seeking if finish is not zero
 			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_ACCURATE,
                          GST_SEEK_TYPE_SET, start,
