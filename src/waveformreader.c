@@ -301,8 +301,6 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
-	// catch element messages for 'level'
-    g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
 	// catch eos messages for stream end
 	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
 	// catch errors in bus
@@ -319,12 +317,16 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 			}
 			g_message("Doing seeking %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT"\n", start, finish);
 			// do seeking if finish is not zero
-			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_ACCURATE,
+			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE,
                          GST_SEEK_TYPE_SET, start,
                          GST_SEEK_TYPE_SET, finish);
 			// catch segment done messages
 			//g_signal_connect (bus, "message::segment-done", (GCallback) bus_call, reader);
 		}
+
+	// catch element messages for 'level'
+    g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
+	
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
