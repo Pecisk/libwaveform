@@ -338,7 +338,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	
 	// as we prepended objects, reverse list
 	reader->priv->readings = g_list_reverse(reader->priv->readings);
-	//g_message("Size: %i", g_list_length(reader->priv->readings));
+	g_message("Size: %i", g_list_length(reader->priv->readings));
 
 	// return pointer to linked list
 	return reader->priv->readings;

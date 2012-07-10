@@ -6,7 +6,8 @@ libwaveformdoc_DATA = \
 	COPYING\
 	AUTHORS\
 	INSTALL\
-	NEWS
+	NEWS\
+	TODO
 
 
 INTLTOOL_FILES = intltool-extract.in \

@@ -1,0 +1,10 @@
+Stuff I have to do
+
+# Needed fixes in Gstreamer 'level' element
+* Need to provide posibility to split buffer and therefore have less interval than buffer limits
+* Need to provide posibility to get low peak of interval
+
+# Initial Widget code
+* Create waveform using rms values first
+
+# Go trough transfer anotations for WaveformData
