@@ -310,6 +310,13 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	if(finish != 0) 
 		{
+			// FIXME let's try to set state to PAUSED
+			GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+			if(r != GST_STATE_CHANGE_FAILURE)
+			{
+			// FIXME try to get state and work if any error gets issued
+				GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
+			}
 			g_message("Doing seeking %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT"\n", start, finish);
 			// do seeking if finish is not zero
 			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_ACCURATE,
