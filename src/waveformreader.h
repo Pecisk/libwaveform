@@ -73,5 +73,6 @@ WaveformReader * waveform_reader_new(void);
 guint64 waveform_reader_get_start_time (WaveformLevelReading * reading);
 guint64 waveform_reader_get_end_time (WaveformLevelReading * reading);
 GArray * waveform_reader_get_channel_readings (WaveformLevelReading * reading);
+GList * waveform_reader_get_subreadings (WaveformLevelReading * reading);
 
 #endif /* __WAVEFORM_READER_H__ */

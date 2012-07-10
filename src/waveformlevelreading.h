@@ -64,5 +64,6 @@ GType waveform_level_reading_get_type (void);
 
 WaveformLevelReading *  waveform_level_reading_ref		(WaveformLevelReading *reading);
 void					waveform_level_reading_unref	(WaveformLevelReading *reading);
+WaveformLevelReading * waveform_level_reading_new(void);
 
 #endif /* __WAVEFORM_LEVEL_READING_H__ */

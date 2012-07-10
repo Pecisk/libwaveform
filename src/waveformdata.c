@@ -44,6 +44,7 @@ waveform_data_init (WaveformData *self)
 	self->priv = WAVEFORM_DATA_GET_PRIVATE (self);
 	self->priv->active_rough = NULL;
 	self->priv->active_detailed = NULL;
+	self->priv->readings = NULL;
 }
 
 static void
@@ -61,6 +62,8 @@ waveform_data_class_init (WaveformDataClass *klass)
 	GObjectClass* parent_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = waveform_data_finalize;
+
+	g_type_class_add_private (klass, sizeof (WaveformDataPrivate));
 }
 
 /**
@@ -80,7 +83,7 @@ WaveformData * waveform_data_new(void) {
 /**
  * waveform_data_add:
  * @self: pointer to #WaveformData object which holds audio level information in data structure.
- * @readings: a pointer to a #GList of readings from waveform_reader_get_levels.
+ * @readings: (transfer none) (element-type Waveform.LevelReading): a pointer to a #GList of readings from waveform_reader_get_levels.
  *
  * Adds list of #WaveformLevelReading to #WaveformData structure.
  *
@@ -92,11 +95,14 @@ WaveformData * waveform_data_new(void) {
 gboolean
 waveform_data_add (WaveformData *self, GList *readings)
 {
+	g_message("Once");
 	// If there is no data, just copy it
 	// FIXME do we expect just to copy pointer? Deep copying
 	// would require implementation of copy function for WaveformLevelReading
 	if(self->priv->readings == NULL) {
-		self->priv->readings = &readings;
+		self->priv->readings = g_list_copy(readings);
+		GList *g = g_list_first(self->priv->readings);
+		g_message("Data inserted %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT, (guint64)((WaveformLevelReading*)g->data)->start_time, (guint64)((WaveformLevelReading*)g->data)->end_time);
 		return TRUE;
 		}
 	else {
@@ -109,19 +115,22 @@ waveform_data_add (WaveformData *self, GList *readings)
 		GList *new = g_list_first(readings);
 		WaveformLevelReading *read_new = (WaveformLevelReading*)new->data;
 		guint64 new_period = read_new->end_time - read_new->start_time;
-
+		g_message("Periods: %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT, base_period, new_period);
 		if(base_period % new_period == 0)
 		{
+			g_message("This is divide without modulo.\n");
 			// do a modulo to see if it's worth even to look at it
 			// if there's leftovers, read_new doesn't fit n=integer times
 			if(base_period/new_period == 1)
 			{
+				g_message("If we are here, something's wrong.\n");
 				// FIXME if they are with equal period, copy over
 				// could have option that if there is equal period, you could
 				// ignore it like now or copy over
 				// anyway, we done here, and operation is success
 				return TRUE;
 			} else {
+				g_message("This is subreadings.\n");
 				// readsecond fits in readfirst, and they are not equal
 				// so we insert those data
 				g_list_foreach(readings, add_each_reading, self);
@@ -135,8 +144,24 @@ waveform_data_add (WaveformData *self, GList *readings)
 	// end of waveform_data_add
 }
 
+/**
+ * waveform_data_get:
+ * @self: pointer to #WaveformData object which holds audio level information in data structure.
+ *
+ * Returns: (transfer none) (element-type Waveform.LevelReading): #GList of data model structure.
+ *
+ * Since: 0.1
+ */
+
+GList * waveform_data_get(WaveformData *self) {
+	//GList *g = g_list_first(self->priv->readings);
+	//return g;
+	return (GList*)self->priv->readings;
+}
+
 void add_each_reading(gpointer data, gpointer user_data) {
 	// first, let's get out pointers
+	g_message("add_each_reading");
 	WaveformLevelReading *reading = (WaveformLevelReading*)data;
 	WaveformData *self = WAVEFORM_DATA ((GObject*)user_data);
 
@@ -151,14 +176,19 @@ void add_each_reading(gpointer data, gpointer user_data) {
 	// need to initialise it first for while check
 	WaveformLevelReading *rough_reading = NULL;
 
-	{
+	do {
+	// FIXME what if subreading is wrong entirerly - issue error
 	rough_reading = (WaveformLevelReading*)self->priv->active_rough->data;
-	
+	g_message("Vajadzetu %"G_GUINT64_FORMAT" <= %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" <= %"G_GUINT64_FORMAT, rough_reading->start_time, reading->start_time, reading->end_time, rough_reading->end_time);
 	// if reading doesn't fit in rough_reading, iterate to next element in list
 	// and nullify active_detailed as we are in new rough period
 	if(!(rough_reading->start_time <= reading->start_time && reading->end_time  <= rough_reading->end_time))
 		{
+			g_message("Hope to next rough");
 			self->priv->active_rough = g_list_next(self->priv->active_rough);
+			// reverse linked list because we did prepend
+			self->priv->active_detailed = g_list_reverse(self->priv->active_detailed);
+			// clean it up, we moving on next rough reading
 			self->priv->active_detailed = NULL;
 		}
 	} while(!(rough_reading->start_time <= reading->start_time && reading->end_time <= rough_reading->end_time));
@@ -208,4 +238,5 @@ void add_each_reading(gpointer data, gpointer user_data) {
 			}	
 			
 	}
+	g_message("finished.\n");
 }

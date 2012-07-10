@@ -178,6 +178,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// Set end time of the buffer as time of the reading
 			const GValue *stream_time = gst_structure_get_value(st, "stream-time");
 			const GValue *duration = gst_structure_get_value(st, "duration");
+			//g_message("stream-time %"G_GUINT64_FORMAT"\n", (guint64)g_value_get_uint64(stream_time));
+			//g_message("duration %"G_GUINT64_FORMAT"\n", (guint64)g_value_get_uint64(duration));
 			self->priv->reading->end_time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
 			self->priv->reading->start_time = (guint64)g_value_get_uint64(stream_time);
 			
@@ -194,7 +196,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
-			g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
+			//g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			
 		}
@@ -277,11 +279,11 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	
 	// add elements to the pipeline
 	gst_bin_add_many (GST_BIN (pipeline), decoder, converter, level_element, fakesink, NULL);
-	g_message("Elements added");
+	//g_message("Elements added");
 	// link elements
 	gst_element_link_many (converter, level_element, fakesink, NULL);
 	g_signal_connect (decoder, "pad-added", G_CALLBACK (on_pad_added), converter);
-	g_message("Elements linked");
+	//g_message("Elements linked");
 	
 	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
 	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
@@ -301,24 +303,20 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// catch element messages for 'level'
     g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
-
+	// catch eos messages for stream end
+	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
 	// catch errors in bus
 	g_signal_connect (bus, "message::error", (GCallback) bus_call, reader);
 
 	if(finish != 0) 
 		{
 			// do seeking if finish is not zero
-			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_SEGMENT|GST_SEEK_FLAG_ACCURATE,
+			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_ACCURATE,
                          GST_SEEK_TYPE_SET, start,
                          GST_SEEK_TYPE_SET, finish);
 			// catch segment done messages
-			g_signal_connect (bus, "message::segment-done", (GCallback) bus_call, reader);
-		} else {
-			// if not seeking, 
-			// catch eos messages for stream end
-			g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+			//g_signal_connect (bus, "message::segment-done", (GCallback) bus_call, reader);
 		}
-
 	// playing back pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
@@ -327,7 +325,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	
 	// pausing pipeline
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
-	g_message("State null");
+	//g_message("State null");
 	// unref/free all stuff
 
 	g_source_remove (id);
@@ -336,11 +334,11 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	gst_object_unref(bus);
 	gst_object_unref(GST_OBJECT(pipeline));
-    g_message("Business finished");
+    //g_message("Business finished");
 	
 	// as we prepended objects, reverse list
 	reader->priv->readings = g_list_reverse(reader->priv->readings);
-	g_message("Size: %i", g_list_length(reader->priv->readings));
+	//g_message("Size: %i", g_list_length(reader->priv->readings));
 
 	// return pointer to linked list
 	return reader->priv->readings;
@@ -383,4 +381,23 @@ guint64 waveform_reader_get_start_time (WaveformLevelReading * reading) {
  */
 GArray * waveform_reader_get_channel_readings (WaveformLevelReading * reading) {
 	return reading->levels;
+}
+
+/**
+ * waveform_reader_get_subreadings:
+ * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
+ *
+ * Returns: (transfer full) (element-type Waveform.LevelReading): The #GPtrArray of subreadings of period covered by reading.
+ *
+ * Since: 0.1
+ */
+GList * waveform_reader_get_subreadings (WaveformLevelReading * reading) {
+
+	// FIXME temporary solution is to return first actual GList from GPtrArray
+	// first, check is subreadings isn't empty
+
+	if(reading->subreadings == NULL)
+			return NULL;
+	else
+			return (GList*)g_ptr_array_index(reading->subreadings, 0);
 }

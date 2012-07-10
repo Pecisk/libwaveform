@@ -48,7 +48,9 @@ struct _WaveformData
 };
 
 GType waveform_data_get_type (void) G_GNUC_CONST;
-gboolean waveform_data_add (WaveformData *data, GList *readings);
+WaveformData * waveform_data_new(void);
+gboolean waveform_data_add (WaveformData *self, GList *readings);
+GList * waveform_data_get (WaveformData *self);
 
 G_END_DECLS
 
