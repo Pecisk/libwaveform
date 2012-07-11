@@ -196,7 +196,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			}
 
 			// When finished with reading, append it to linked list
-			//g_message("%i : %lld : %lld",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time);	
+			g_message("%i : %"G_GUINT64_FORMAT" : %"G_GUINT64_FORMAT" : %f",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time,   g_array_index(self->priv->reading->levels, gfloat, 0));	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			
 		}
