@@ -56,6 +56,7 @@ Waveform-@LIBWAVEFORM_API_VERSION@.gir: $(INTROSPECTION_SCANNER) libwaveform-@LI
 		--include=GLib-2.0 \
 		--include=GObject-2.0 \
 		--include=Gst-1.0 \
+		--include=Gtk-3.0 \
 		--libtool="$(top_builddir)/libtool" \
 		--pkg glib-2.0 \
 		--pkg gobject-2.0 \

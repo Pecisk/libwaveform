@@ -27,7 +27,7 @@ dnl API version
 LIBWAVEFORM_API_VERSION=0.1
 AC_SUBST(LIBWAVEFORM_API_VERSION)
 
-PKG_CHECK_MODULES(LIBWAVEFORM, [gstreamer-1.0 glib-2.0 ])
+PKG_CHECK_MODULES(LIBWAVEFORM, [gstreamer-1.0 glib-2.0 gtk+-3.0])
 
 dnl check for gobject-introspection
 GOBJECT_INTROSPECTION_CHECK([1.31.1])

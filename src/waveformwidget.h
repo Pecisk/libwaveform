@@ -1,36 +1,35 @@
-/* cpu.h */
-
 #ifndef __WAVEFORMWIDGET_H
 #define __WAVEFORMWIDGET_H
 
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
 
-#define GTK_TYPE_WAVEFORM             		(gtk_waveform_get_type ())
-#define GTK_WAVEFORM(obj)						(G_TYPE_CHECK_INSTANCE_CAST((obj), GTK_TYPE_WAVEFORM, GtkWaveform))
-#define GTK_WAVEFORM_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((obj), GTK_WAVEFORM, GtkWaveformClass))
-#define GTK_IS_WAVEFORM(obj) 				(G_TYPE_CHECK_INSTANCE_TYPE((obj), GTK_TYPE_WAVEFORM))
-#define GTK_IS_WAVEFORM_CLASS(obj)    (G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_TYPE_WAVEFORM))
-#define GTK_WAVEFORM_GET_CLASS        (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_WAVEFORM, GtkWaveformClass))
+#define WAVEFORM_TYPE_DRAWING             		(waveform_drawing_get_type ())
+#define WAVEFORM_DRAWING(obj)						(G_TYPE_CHECK_INSTANCE_CAST((obj), WAVEFORM_TYPE_DRAWING, WaveformDrawing))
+#define WAVEFORM_DRAWING_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((obj), WAVEFORM_DRAWING, WaveformDrawingClass))
+#define WAVEFORM_IS_DRAWING(obj) 				(G_TYPE_CHECK_INSTANCE_TYPE((obj), WAVEFORM_TYPE_DRAWING))
+#define WAVEFORM_IS_DRAWING_CLASS(obj)    (G_TYPE_CHECK_CLASS_TYPE ((obj), WAVEFORM_TYPE_DRAWING))
+#define WAVEFORM_DRAWING_GET_CLASS        (G_TYPE_INSTANCE_GET_CLASS ((obj), WAVEFORM_TYPE_DRAWING, WaveformDrawingClass))
 
-typedef struct _GtkWaveform GtkWaveform;
-typedef struct _GtkWaveformClass GtkWaveformClass;
+typedef struct _WaveformDrawing WaveformDrawing;
+typedef struct _WaveformDrawingClass WaveformDrawingClass;
+typedef struct _WaveformDrawingPrivate WaveformDrawingPrivate;
 
-
-struct _GtkWaveform {
+struct _WaveformDrawing {
   GtkDrawingArea parent;
 };
 
-struct _GtkWaveformClass {
+struct _WaveformDrawingClass {
   GtkDrawingAreaClass parent_class;
 };
 
 
-GtkType gtk_waveform_get_type(void);
-GtkWidget * gtk_waveform_new();
+GType waveform_drawing_get_type(void);
+GtkWidget * waveform_drawing_new();
 
 
 G_END_DECLS
