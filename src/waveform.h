@@ -22,4 +22,5 @@
 #include <waveformreader.h>
 #include <waveformlevelreading.h>
 #include <waveformdata.h>
+#include <waveformwidget.h>
 #endif /* __WAVEFORM_H__ */

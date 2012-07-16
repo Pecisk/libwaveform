@@ -9,21 +9,23 @@
 G_BEGIN_DECLS
 
 
-#define GTK_WAVEFORM(obj) GTK_CHECK_CAST(obj, gtk_waveform_get_type (), GtkWaveform)
-#define GTK_WAVEFORM_CLASS(klass) GTK_CHECK_CLASS_CAST(klass, gtk_waveform_get_type(), GtkWaveformClass)
-#define GTK_IS_WAVEFORM(obj) GTK_CHECK_TYPE(obj, gtk_waveform_get_type())
-
+#define GTK_TYPE_WAVEFORM             		(gtk_waveform_get_type ())
+#define GTK_WAVEFORM(obj)						(G_TYPE_CHECK_INSTANCE_CAST((obj), GTK_TYPE_WAVEFORM, GtkWaveform))
+#define GTK_WAVEFORM_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((obj), GTK_WAVEFORM, GtkWaveformClass))
+#define GTK_IS_WAVEFORM(obj) 				(G_TYPE_CHECK_INSTANCE_TYPE((obj), GTK_TYPE_WAVEFORM))
+#define GTK_IS_WAVEFORM_CLASS(obj)    (G_TYPE_CHECK_CLASS_TYPE ((obj), GTK_TYPE_WAVEFORM))
+#define GTK_WAVEFORM_GET_CLASS        (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_WAVEFORM, GtkWaveformClass))
 
 typedef struct _GtkWaveform GtkWaveform;
 typedef struct _GtkWaveformClass GtkWaveformClass;
 
 
 struct _GtkWaveform {
-  GtkWidget widget;
+  GtkDrawingArea parent;
 };
 
 struct _GtkWaveformClass {
-  GtkWidgetClass parent_class;
+  GtkDrawingAreaClass parent_class;
 };
 
 
