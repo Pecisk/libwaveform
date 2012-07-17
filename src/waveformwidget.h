@@ -29,8 +29,8 @@ struct _WaveformDrawingClass {
 
 
 GType waveform_drawing_get_type(void);
-GtkWidget * waveform_drawing_new();
-
+WaveformDrawing * waveform_drawing_new(void);
+gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_model);
 
 G_END_DECLS
 
