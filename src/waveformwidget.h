@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <glib-object.h>
+#include "waveformdata.h"
+#include <math.h>
 
 G_BEGIN_DECLS
 
@@ -21,6 +23,7 @@ typedef struct _WaveformDrawingPrivate WaveformDrawingPrivate;
 
 struct _WaveformDrawing {
   GtkDrawingArea parent;
+  WaveformDrawingPrivate *priv;
 };
 
 struct _WaveformDrawingClass {

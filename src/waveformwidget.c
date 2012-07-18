@@ -1,20 +1,21 @@
 #include "waveformwidget.h"
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include <math.h>
 
 static void waveform_drawing_class_init(WaveformDrawingClass *klass);
 static void waveform_drawing_init(WaveformDrawing *waveform);
-void waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
-
-G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
+gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
 
 #define WAVEFORM_DRAWING_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_DRAWING, WaveformDrawingPrivate))
 
-struct _WaveformReaderPrivate
+struct _WaveformDrawingPrivate
 {
   // pointer to WaveformData model
   WaveformData *data;
 };
+
+G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
 
 static void
 waveform_drawing_init(WaveformDrawing *self)
@@ -29,6 +30,8 @@ waveform_drawing_class_init(WaveformDrawingClass *klass)
   widget_class = (GtkWidgetClass *) klass;
 
   widget_class->draw = waveform_drawing_draw;
+
+  g_type_class_add_private (klass, sizeof (WaveformDrawingPrivate));
 }
 
 /**
@@ -46,7 +49,7 @@ WaveformDrawing * waveform_drawing_new(void)
    return g_object_new(WAVEFORM_TYPE_DRAWING, NULL);
 }
 
-void waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
+gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 {
 
 	// FIXME taking cairo context from given params segfaults
@@ -54,8 +57,10 @@ void waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 	cr = gdk_cairo_create(gtk_widget_get_window(widget));
 
 	// FIXME get allocated dimensions
-	int width = widget.allocation->width;
-	int heigth = widget.allocation->heigth;
+	GtkAllocation *allocation = NULL;
+	gtk_widget_get_allocation(widget, allocation);
+	int width = allocation->width;
+	int height = allocation->height;
 
 	// initialise x coordinate
 	int x = 1;
@@ -77,22 +82,22 @@ void waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 		data = g_list_first(data);
 	  	do {
 			// first get reading
-			WaveformLevelReading reading = WAVEFORM_LEVEL_READING(data->data);
+			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
 			// then array of chanel readings
-			GArray levels = (GArray*)reading->levels;
+			GArray *levels = (GArray*)reading->levels;
 			// level of channel
 			gfloat level = g_array_index(levels, gfloat, 0);
 			// convert to coordinates
 			// FIXME temporary fix with using Jokosher method
-			decibel_range = 80;
+			gfloat decibel_range = 80;
 			// if level is maximum negative floated number, we crop it to -decibel_range
 			if(level == -DBL_MAX)
 				  level = 0 - decibel_range;
-			level = min(level, decibel_range);
-			level = max(level, -decibel_range);
-			level = level  + decibel_range;
-			int peak = (int)((level/decibel_range) * heigth);
-			cairo_line_to(x, peak);
+			level = (gfloat)fminf(level, (float)decibel_range);
+			level = (gfloat)fmaxf(level, (float)-decibel_range);
+			level = level  + (gfloat)decibel_range;
+			int peak = (int)((level/decibel_range) * height);
+			cairo_line_to(cr, x, peak);
 			cairo_stroke(cr);
 			// increase x coordinates
 			x++;
@@ -104,6 +109,7 @@ void waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 		  } while (data != NULL);
     }
  cairo_destroy(cr);
+	return FALSE;
 }
 /**
  * waveform_drawing_set_model:
