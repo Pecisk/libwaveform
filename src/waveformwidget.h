@@ -28,7 +28,6 @@
 
 G_BEGIN_DECLS
 
-
 #define WAVEFORM_TYPE_DRAWING             		(waveform_drawing_get_type ())
 #define WAVEFORM_DRAWING(obj)						(G_TYPE_CHECK_INSTANCE_CAST((obj), WAVEFORM_TYPE_DRAWING, WaveformDrawing))
 #define WAVEFORM_DRAWING_CLASS(klass)		(G_TYPE_CHECK_CLASS_CAST((obj), WAVEFORM_DRAWING, WaveformDrawingClass))
@@ -57,9 +56,8 @@ struct _WaveformDrawingClass {
   GtkDrawingAreaClass parent_class;
 };
 
-
 GType waveform_drawing_get_type(void);
-WaveformDrawing * waveform_drawing_new(void);
+GtkDrawingArea * waveform_drawing_new(void);
 gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_model);
 
 G_END_DECLS
