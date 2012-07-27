@@ -49,12 +49,18 @@ typedef struct _WaveformDrawingPrivate WaveformDrawingPrivate;
 
 struct _WaveformDrawing {
   GtkDrawingArea parent;
+
+  /* instance members */
   WaveformDrawingPrivate *priv;
 };
 
 struct _WaveformDrawingClass {
   GtkDrawingAreaClass parent_class;
 };
+
+/*
+ * Method definitions.
+ */
 
 GType waveform_drawing_get_type(void);
 GtkDrawingArea * waveform_drawing_new(void);

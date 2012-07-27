@@ -22,11 +22,6 @@
 #include <cairo.h>
 #include <math.h>
 
-static void waveform_drawing_class_init(WaveformDrawingClass *klass);
-static void waveform_drawing_init(WaveformDrawing *waveform);
-static void waveform_drawing_finalize(GObject *object);
-gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
-
 #define WAVEFORM_DRAWING_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_DRAWING, WaveformDrawingPrivate))
 
 struct _WaveformDrawingPrivate
@@ -37,6 +32,13 @@ struct _WaveformDrawingPrivate
   int width;
   int height;
 };
+
+static void waveform_drawing_class_init(WaveformDrawingClass *klass);
+static void waveform_drawing_init(WaveformDrawing *waveform);
+static void waveform_drawing_dispose(GObject *object);
+static void waveform_drawing_finalize(GObject *object);
+
+gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
 
 G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
 
@@ -58,7 +60,20 @@ waveform_drawing_class_init(WaveformDrawingClass *klass)
   object_class->finalize = waveform_drawing_finalize;
   widget_class->draw = waveform_drawing_draw;
 
-  g_type_class_add_private (object_class, sizeof (WaveformDrawingPrivate));
+  g_type_class_add_private (klass, sizeof (WaveformDrawingPrivate));
+}
+
+static void
+waveform_drawing_dispose (GObject *gobject)
+{
+  G_OBJECT_CLASS (waveform_drawing_parent_class)->dispose (gobject);
+}
+
+
+static void
+waveform_drawing_finalize (GObject *object)
+{
+  G_OBJECT_CLASS (waveform_drawing_parent_class)->finalize (object);
 }
 
 /**
@@ -159,10 +174,4 @@ gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_mo
 
 	self->priv->data = data_model;
 	return TRUE;
-}
-
-static void
-waveform_drawing_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (waveform_drawing_parent_class)->finalize (object);
 }
