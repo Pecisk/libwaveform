@@ -76,16 +76,6 @@ waveform_drawing_finalize (GObject *object)
   G_OBJECT_CLASS (waveform_drawing_parent_class)->finalize (object);
 }
 
-/**
- * waveform_drawing_new:
- *
- * Creates #WaveformDrawing widget object of waveform drawing.
- *
- * Returns: (transfer full): The new #GtkDrawingArea based widget
- *
- * Since: 0.1
- */
-
 GtkDrawingArea * waveform_drawing_new(void)
 {
    return g_object_new(WAVEFORM_TYPE_DRAWING, NULL);
