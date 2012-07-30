@@ -339,8 +339,8 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// unref/free all stuff
 
 	g_source_remove (id);
-	g_main_context_unref(reader->priv->context);
 	g_main_loop_unref(reader->priv->loop);
+	g_main_context_unref(reader->priv->context);
 
 	gst_object_unref(bus);
 	gst_object_unref(GST_OBJECT(pipeline));

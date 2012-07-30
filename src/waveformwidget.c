@@ -104,8 +104,10 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 	
 	// get data from widget
 	WaveformDrawing *self = WAVEFORM_DRAWING(widget);
-	
+	g_message("Got WaveformDrawing object.");
 	// if there's WaveformData to draw, let's do it
+	if(self->priv->data == NULL)
+		g_message("There is no data.");
 	if(self->priv->data != NULL) {
 		g_message("Data is available.");
 		// get data model
@@ -143,7 +145,7 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 		  } while (data != NULL);
     }
  //cairo_destroy(cr);
-	return FALSE;
+	return TRUE;
 }
 
 /**
