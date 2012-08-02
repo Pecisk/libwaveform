@@ -96,15 +96,21 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 	g_message("Allocation: %i %i", width, height);
 	// initialise x coordinate
 	int x = 1;
-
-	// cairo stuff
-	//cairo_set_line_width (cr, 0.1);
-	//cairo_set_source_rgb(cr, 0, 0, 0);
+	int xc = width/2;
+	int yc = height/2;
 	
+	// cairo stuff
+	const GdkRGBA drawing_color = {0.0, 0.0, 0.0, 1.0};
+	gdk_cairo_set_source_rgba(cr, &drawing_color);
+	
+	cairo_set_line_width (cr, 1.0);
+	cairo_move_to(cr, 0, 0);
+
+	//cairo_set_source_rgb(cr, 1, 0, 0);
+	cairo_move_to (cr, 1.0, 1.0);
 	
 	// get data from widget
 	WaveformDrawing *self = WAVEFORM_DRAWING(widget);
-	g_message("Got WaveformDrawing object.");
 	// if there's WaveformData to draw, let's do it
 	if(self->priv->data == NULL)
 		g_message("There is no data.");
@@ -116,8 +122,11 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 		GList *data = waveform_data_get(data_model);
 		// do a loop while we can read data linked list
 		data = g_list_first(data);
+		int peak = 0;
 	  	do {
+			 cairo_move_to(cr, x-1, peak);
 			// first get reading
+			//g_message("Get a reading.");
 			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
 			// then array of chanel readings
 			GArray *levels = (GArray*)reading->levels;
@@ -132,11 +141,11 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 			level = (gfloat)fminf(level, (float)decibel_range);
 			level = (gfloat)fmaxf(level, (float)-decibel_range);
 			level = level  + (gfloat)decibel_range;
-			int peak = (int)((level/decibel_range) * height);
-			//cairo_line_to(cr, x, peak);
-			//cairo_stroke(cr);
+			peak = (int)((level/decibel_range) * height);
+			cairo_line_to(cr, x, peak);
+			cairo_stroke(cr);
 			// increase x coordinates
-			x++;
+			x = x+3;
 			// currently if we reach end of allocated space, break from loop
 			// otherwise countinue until data is empty
 			if(x > width)
