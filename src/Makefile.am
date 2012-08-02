@@ -29,10 +29,10 @@ include_HEADERS = \
     waveformwidget.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libwaveform-@LIBWAVEFORM_API_VERSION@.pc
+pkgconfig_DATA = libwaveform.pc
 
 EXTRA_DIST = \
-	libwaveform-0.1.pc.in
+	libwaveform.pc.in
 
 INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)

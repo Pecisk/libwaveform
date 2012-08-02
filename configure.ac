@@ -34,6 +34,6 @@ GOBJECT_INTROSPECTION_CHECK([1.31.1])
 
 AC_OUTPUT([
 Makefile
-src/libwaveform-0.1.pc
+src/libwaveform.pc
 src/Makefile
 po/Makefile.in])
