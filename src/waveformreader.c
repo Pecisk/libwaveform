@@ -296,8 +296,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 	// get id 
     id = g_source_attach (source, reader->priv->context);
-	// context has source ref now
-	g_source_unref (source);
+	
 
 	// FIXME do something if source can't be attached to context, t.i. id == 0;
 
@@ -338,7 +337,10 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	//g_message("State null");
 	// unref/free all stuff
 
-	g_source_remove (id);
+	// has to g_source_destroy, as it's attached to non-default context
+	g_source_destroy(source);
+	// context has source ref now
+	g_source_unref (source);
 	g_main_loop_unref(reader->priv->loop);
 	g_main_context_unref(reader->priv->context);
 
