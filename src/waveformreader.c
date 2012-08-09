@@ -32,6 +32,7 @@ struct _WaveformReaderPrivate
   GMainLoop *loop;
   WaveformLevelReading *reading;
   GList *readings;
+  GError *err;
 };
 
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
@@ -45,6 +46,7 @@ static void
 waveform_reader_init (WaveformReader *self)
 {
   self->priv = WAVEFORM_READER_GET_PRIVATE (self);
+  self->priv->err = NULL;
 
 }
 
@@ -113,21 +115,28 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 	
 	switch(GST_MESSAGE_TYPE(msg)) {
 		case GST_MESSAGE_ERROR: {
-		GError *err = NULL;
-		gchar *dbg_info = NULL;
+			// FIXME error if file isn't valid (not found, or can't be processed)
+			GError *err = NULL;
+			gchar *dbg_info = NULL;
 		
-		gst_message_parse_error (msg, &err, &dbg_info);
-		//g_printerr ("ERROR from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message);
-		//g_printerr ("Debugging info: %s\n", (dbg_info) ? dbg_info : "none");
+			gst_message_parse_error (msg, &err, &dbg_info);
+			//g_printerr ("ERROR from element %s: %s\n", GST_OBJECT_NAME (msg->src), err->message);
+			//g_printerr ("Debugging info: %s\n", (dbg_info) ? dbg_info : "none");
 		
-		// FIXME handle well known errors and report it correctly to user
-		if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0)
-			g_message("Stream provided by URI not found.");
-		// can't decode
-		// don't have audio
-		// default
-		g_error_free (err);
-		g_free (dbg_info);
+			// if file can't be accessed, return GError
+			if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0)
+				g_message("Stream provided by URI not found.");
+				self->priv->err = g_error_new(2, 1, "File not found. Check it's path and/or access permissions.");
+			else {
+				// if it's another Gstreamer error, just forward it to the app for now
+				// TODO think about generating those errors here, pros and cos
+				self->priv->err = err;
+			}
+			// can't decode
+			// don't have audio
+			// default
+			//g_error_free (err);
+			g_free (dbg_info);
 		g_main_loop_quit(self->priv->loop);
 		break;	
 		}
@@ -236,7 +245,7 @@ WaveformReader * waveform_reader_new(void) {
  * Since: 0.1
  */
 
-GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish) {
+GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err) {
 	
 	// Creating our own context
     reader->priv->context = g_main_context_new();
@@ -259,14 +268,15 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	level_element = gst_element_factory_make("level","level-element");
 	fakesink = gst_element_factory_make("fakesink", "fake-sink");
 	
-	// FIXME return API error about problems with gstreamer core installation
+	// return API error about problems with gstreamer core installation
 	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
-    g_printerr ("One element could not be created. Exiting.\n");
-    //return -1;
+		g_printerr ("One element could not be created. Exiting.\n");
+		self->priv->err = g_error_new(1, 1, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
+		return NULL;
 	}
 
 	// set up file location
-	// FIXME error if file isn't valid (not found, or can't be processed)
+	
 	g_object_set(G_OBJECT(decoder), "uri", file_location, NULL);
 	// set caps for exposing only raw audio
 	GstCaps *caps = gst_caps_new_empty_simple("audio/x-raw");
@@ -353,6 +363,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	g_message("Size: %i", g_list_length(reader->priv->readings));
 
 	// return pointer to linked list
+	// FIXME if self->priv->err is not NULL, return NULL in result
 	return reader->priv->readings;
 }
 
