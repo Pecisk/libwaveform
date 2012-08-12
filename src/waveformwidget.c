@@ -131,17 +131,20 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
 			// then array of chanel readings
 			GArray *levels = (GArray*)reading->levels;
 			// level of channel
-			gfloat level = g_array_index(levels, gfloat, 0);
+			gdouble level = g_array_index(levels, gdouble, 0);
+			g_message("Level #1 %f", level);
 			// convert to coordinates
 			// FIXME temporary fix with using Jokosher method
-			gfloat decibel_range = 80;
+			gdouble decibel_range = 80;
 			// if level is maximum negative floated number, we crop it to -decibel_range
 			if(level == -DBL_MAX)
 				  level = 0 - decibel_range;
-			level = (gfloat)fminf(level, (float)decibel_range);
-			level = (gfloat)fmaxf(level, (float)-decibel_range);
-			level = level  + (gfloat)decibel_range;
+			g_message("Level #2 %f", level);
+			level = (gdouble)fmin(level, (gdouble)decibel_range);
+			level = (gdouble)fmax(level, (gdouble)-decibel_range);
+			level = level  + decibel_range;
 			peak = (int)((level/decibel_range) * height);
+			g_message("Level #3 %f", level);
 			cairo_line_to(cr, x, peak);
 			cairo_stroke(cr);
 			// increase x coordinates

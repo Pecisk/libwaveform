@@ -192,8 +192,6 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			//g_message("duration %"G_GUINT64_FORMAT"\n", (guint64)g_value_get_uint64(duration));
 			self->priv->reading->end_time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
 			self->priv->reading->start_time = (guint64)g_value_get_uint64(stream_time);
-
-			GArray *levels = g_array_new (FALSE, TRUE, sizeof (gfloat));
 			
 			int i;
 			for(i=0;i<channels;i++) {
@@ -201,16 +199,11 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 				rms_value = g_value_array_get_nth(rms_list, i);
 				// add rms value to levels array
 				gdouble rms_value_double = g_value_get_double(rms_value);
-				g_message("RMS: %f", rms_value_double);
-				//g_array_append_val(self->priv->reading->levels, rms_value_double);
-				//g_array_insert_val(self->priv->reading->levels, i, rms_value_double);
-				g_array_insert_val(levels, i, rms_value_double);
-				gfloat level = g_array_index(levels, gfloat, i);
-				g_message("Data: %f", level);
+				g_array_append_val(self->priv->reading->levels, rms_value_double);
 			}
 
 			// When finished with reading, append it to linked list
-			//g_message("%i : %"G_GUINT64_FORMAT" : %"G_GUINT64_FORMAT" : %f",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time,   g_array_index(self->priv->reading->levels, gfloat, 0));	
+			g_message("%i : %"G_GUINT64_FORMAT" : %"G_GUINT64_FORMAT" : %f : %f",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time, g_array_index(self->priv->reading->levels, gdouble, 0), g_array_index(self->priv->reading->levels, gdouble, 1));	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			
 		}
