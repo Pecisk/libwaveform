@@ -124,9 +124,10 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			//g_printerr ("Debugging info: %s\n", (dbg_info) ? dbg_info : "none");
 		
 			// if file can't be accessed, return GError
-			if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0)
+			if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0) {
 				g_message("Stream provided by URI not found.");
 				self->priv->err = g_error_new(2, 1, "File not found. Check it's path and/or access permissions.");
+			}
 			else {
 				// if it's another Gstreamer error, just forward it to the app for now
 				// TODO think about generating those errors here, pros and cos
@@ -191,9 +192,8 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			//g_message("duration %"G_GUINT64_FORMAT"\n", (guint64)g_value_get_uint64(duration));
 			self->priv->reading->end_time = ((guint64)g_value_get_uint64(stream_time)) + ((guint64)g_value_get_uint64(duration));
 			self->priv->reading->start_time = (guint64)g_value_get_uint64(stream_time);
-			
-			// Initialise GArray for storing levels for each channel
-			//self->priv->reading->levels = g_array_new (FALSE, FALSE, sizeof (gfloat));
+
+			GArray *levels = g_array_new (FALSE, TRUE, sizeof (gfloat));
 			
 			int i;
 			for(i=0;i<channels;i++) {
@@ -201,11 +201,16 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 				rms_value = g_value_array_get_nth(rms_list, i);
 				// add rms value to levels array
 				gdouble rms_value_double = g_value_get_double(rms_value);
-				g_array_append_val(self->priv->reading->levels, rms_value_double);
+				g_message("RMS: %f", rms_value_double);
+				//g_array_append_val(self->priv->reading->levels, rms_value_double);
+				//g_array_insert_val(self->priv->reading->levels, i, rms_value_double);
+				g_array_insert_val(levels, i, rms_value_double);
+				gfloat level = g_array_index(levels, gfloat, i);
+				g_message("Data: %f", level);
 			}
 
 			// When finished with reading, append it to linked list
-			g_message("%i : %"G_GUINT64_FORMAT" : %"G_GUINT64_FORMAT" : %f",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time,   g_array_index(self->priv->reading->levels, gfloat, 0));	
+			//g_message("%i : %"G_GUINT64_FORMAT" : %"G_GUINT64_FORMAT" : %f",self->priv->reading->refcount, self->priv->reading->start_time, self->priv->reading->end_time,   g_array_index(self->priv->reading->levels, gfloat, 0));	
 			self->priv->readings = g_list_prepend (self->priv->readings, self->priv->reading);
 			
 		}
@@ -237,6 +242,7 @@ WaveformReader * waveform_reader_new(void) {
  * @interval: #guint64 of level reading period, if zero, then 0.1 s (as 120 000 000 ns) period is used by default.
  * @start: #guint64 of start of reading period in ns
  * @finish: #guint64 of end of reading period in ns
+ * @err: pointer-to-pointer of GError to report possible failures
  * 
  * Creates a new #GList with audio level readings in #WaveformLevelReading structures.
  *
@@ -246,6 +252,9 @@ WaveformReader * waveform_reader_new(void) {
  */
 
 GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err) {
+
+	// There's no errors there so far
+	reader->priv->err = NULL;
 	
 	// Creating our own context
     reader->priv->context = g_main_context_new();
@@ -271,7 +280,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// return API error about problems with gstreamer core installation
 	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
 		g_printerr ("One element could not be created. Exiting.\n");
-		self->priv->err = g_error_new(1, 1, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
+		reader->priv->err = g_error_new(1, 1, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
 		return NULL;
 	}
 
@@ -362,8 +371,12 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	reader->priv->readings = g_list_reverse(reader->priv->readings);
 	g_message("Size: %i", g_list_length(reader->priv->readings));
 
+	// make error return in 'err' if there is any
+	g_propagate_error(err, reader->priv->err);
+	// if there is error, return NULL in result
+	if(err == NULL)
+		return NULL;
 	// return pointer to linked list
-	// FIXME if self->priv->err is not NULL, return NULL in result
 	return reader->priv->readings;
 }
 

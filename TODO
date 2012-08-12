@@ -8,3 +8,4 @@ Stuff I have to do
 * Create waveform using rms values first
 
 # Go trough transfer anotations for WaveformData
+# Problems with NULL result passing to waveform_data_add, please check this

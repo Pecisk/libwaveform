@@ -95,7 +95,11 @@ WaveformData * waveform_data_new(void) {
 gboolean
 waveform_data_add (WaveformData *self, GList *readings)
 {
-	g_message("Once");
+	// if readings is null, return true and don't change a thing
+	g_message("Passed no data, no changes.");
+	if(readings == NULL)
+		return TRUE;
+	g_message("Passed some data, adding.");
 	// If there is no data, just copy it
 	// FIXME do we expect just to copy pointer? Deep copying
 	// would require implementation of copy function for WaveformLevelReading
