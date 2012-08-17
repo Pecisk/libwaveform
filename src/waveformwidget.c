@@ -88,49 +88,51 @@ GtkDrawingArea * waveform_drawing_new(void)
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
 
 	WaveformDrawing *drawing = (WaveformDrawing*)widget;
-	GdkRectangle *rect;
-	gboolean fits = gdk_cairo_get_clip_rectangle(cr, rect);
+	GdkRectangle *cairoClipArea;
+	gboolean fits = gdk_cairo_get_clip_rectangle(cr, cairoClipArea);
 	// if waveform isn't showed, don't care to draw it
 	if(fits == FALSE)
 		return TRUE;
-	gboolean success = waveform_drawing_waveform(widget, cr);
-	
+	gboolean success = waveform_drawing_waveform(widget, cr, cairoClipArea);
 	cairo_set_source_surface(cr, drawing->priv->sourceSurface, x, y);
 	cairo_paint(cr);
-	
-	
+	return TRUE;
 }
 
-gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr)
+gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr, GdkRectangle *cairoClipArea)
 {
-   g_message("drawing.");
-	// FIXME taking cairo context from given params segfaults
-	// temporary fix, geting cairo context from widget window
-	//cr = gdk_cairo_create(gtk_widget_get_window(widget));
-
-	// FIXME get allocated dimensions
-	GtkAllocation allocation = {-1,-1,-1,-1};
-	gtk_widget_get_allocation(widget, &allocation);
-	int width = allocation.width;
-	int height = allocation.height;
-	g_message("Allocation: %i %i", width, height);
-	// initialise x coordinate
-	int x = 1;
-	int xc = width/2;
-	int yc = height/2;
-	
-	// cairo stuff
-	const GdkRGBA drawing_color = {0.0, 0.0, 0.0, 1.0};
-	gdk_cairo_set_source_rgba(cr, &drawing_color);
-	
-	cairo_set_line_width (cr, 1.0);
-	cairo_move_to(cr, 0, 0);
-
-	//cairo_set_source_rgb(cr, 1, 0, 0);
-	cairo_move_to (cr, 1.0, 1.0);
-	
-	// get data from widget
+	g_message("drawing.");
 	WaveformDrawing *self = WAVEFORM_DRAWING(widget);
+
+	// get allocated dimensions
+	GdkRectangle *allocatedArea  = {0,0,0,0};
+	gtk_widget_get_allocation(widget, &allocatedArea);
+	int width = allocatedArea.width;
+	int height = allocatedArea.height;
+	//g_message("Allocation: %i %i", width, height);
+
+	// We take tripple of exposed area
+	GdkRectangle *drawingArea = {cairoClipArea.x - allocatedArea.width, allocatedArea.y, allocatedArea.width*3, allocatedArea.height};
+	// set this drawingArea as already cached
+	self->priv->cacheArea = drawingArea;
+	// creating new surface to draw on
+	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, drawingArea.width, drawingArea.height);
+	// to draw we need new context
+	cairo_t *context = cairo_create(self->priv->sourceSurface);
+
+	// drawing white background 
+	cairo_set_line_width (context, 2.0);
+	cairo_set_antialias (context, CAIRO_ANTIALIAS_SUBPIXEL);
+	cairo_rectangle(0, 0, drawingArea.width, drawingArea.height);
+
+	const GdkRGBA background_color = {1.0, 1.0, 1.0, 1.0};
+	gdk_cairo_set_source_rgba(context, &background_color);
+	cairo_fill(context);
+	
+	// initialise x coordinates
+	int x = 1;
+	cairo_move_to (context, 1.0, 1.0);
+	
 	// if there's WaveformData to draw, let's do it
 	if(self->priv->data == NULL)
 		g_message("There is no data.");
@@ -144,7 +146,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr)
 		data = g_list_first(data);
 		int peak = 0;
 	  	do {
-			 cairo_move_to(cr, x-1, peak);
+			 cairo_move_to(context, x-1, peak);
 			// first get reading
 			//g_message("Get a reading.");
 			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
@@ -158,15 +160,15 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr)
 			gdouble decibel_range = 80;
 			// if level is maximum negative floated number, we crop it to -decibel_range
 			if(level == -DBL_MAX)
-				  level = 0 - decibel_range;
+				level = 0 - decibel_range;
 			g_message("Level #2 %f", level);
 			level = (gdouble)fmin(level, (gdouble)decibel_range);
 			level = (gdouble)fmax(level, (gdouble)-decibel_range);
 			level = level  + decibel_range;
 			peak = (int)((level/decibel_range) * height);
 			g_message("Level #3 %f", level);
-			cairo_line_to(cr, x, peak);
-			cairo_stroke(cr);
+			cairo_line_to(context, x, peak);
+			//cairo_stroke(cr);
 			// increase x coordinates
 			x = x+3;
 			// currently if we reach end of allocated space, break from loop
@@ -176,7 +178,20 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr)
 			data = g_list_next(data);
 		  } while (data != NULL);
     }
- //cairo_destroy(cr);
+	//levels gradient fill
+	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, rect.height);
+	cairo_pattern_add_color_stop_rgba(gradient, 0.2, 114./255, 159./255, 207./255, 1);
+	cairo_pattern_add_color_stop_rgba(gradient, 1, 52./255, 101./255, 164./255, 1);
+	cairo_set_source(context, gradient);
+	cairo_fill_preserve(context);
+
+	//levels path (on top of the fill)
+	const GdkRGBA drawing_color = {0.0, 0.0, 0.0, 1.0};
+	gdk_cairo_set_source_rgba(context, &drawing_color);
+	cairo_set_line_join(context, CAIRO_LINE_JOIN_ROUND);
+	cairo_set_line_width(context, 2.0);
+	cairo_stroke(context);
+	
 	return TRUE;
 }
 
