@@ -31,6 +31,8 @@ struct _WaveformDrawingPrivate
   // variables for width and height
   int width;
   int height;
+  GdkRectangle *cacheArea;
+  cairo_surface_t *sourceSurface;
 };
 
 static void waveform_drawing_class_init(WaveformDrawingClass *klass);
@@ -49,6 +51,8 @@ self->priv = WAVEFORM_DRAWING_GET_PRIVATE (self);
 self->priv->width = -1;
 self->priv->height = -1;
 self->priv->data = NULL;
+self->priv->cacheArea = {0,0,0,0};
+drawing->self->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
 }
 
 static void
@@ -81,7 +85,23 @@ GtkDrawingArea * waveform_drawing_new(void)
    return g_object_new(WAVEFORM_TYPE_DRAWING, NULL);
 }
 
-gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr)
+gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
+
+	WaveformDrawing *drawing = (WaveformDrawing*)widget;
+	GdkRectangle *rect;
+	gboolean fits = gdk_cairo_get_clip_rectangle(cr, rect);
+	// if waveform isn't showed, don't care to draw it
+	if(fits == FALSE)
+		return TRUE;
+	gboolean success = waveform_drawing_waveform(widget, cr);
+	
+	cairo_set_source_surface(cr, drawing->priv->sourceSurface, x, y);
+	cairo_paint(cr);
+	
+	
+}
+
+gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr)
 {
    g_message("drawing.");
 	// FIXME taking cairo context from given params segfaults
