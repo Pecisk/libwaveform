@@ -187,7 +187,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			x = x+3;
 			// currently if we reach end of allocated space, break from loop
 			// otherwise countinue until data is empty
-			if(x > width)
+			if(x > self->priv->cacheArea.width)
 				  break;
 			data = g_list_next(data);
 		  } while (data != NULL);
@@ -200,7 +200,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	cairo_fill_preserve(context);
 
 	//levels path (on top of the fill)
-	const GdkRGBA drawing_color = {0.0, 0.0, 0.0, 1.0};
+	const GdkRGBA drawing_color = {0.2, 0.8, 0.0, 1.0};
 	gdk_cairo_set_source_rgba(context, &drawing_color);
 	cairo_set_line_join(context, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_width(context, 2.0);
