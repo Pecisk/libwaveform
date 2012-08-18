@@ -25,6 +25,7 @@
 #include <string.h>
 
 #define WAVEFORM_READER_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), WAVEFORM_TYPE_READER, WaveformReaderPrivate))
+#define WAVEFORM_READER_ERROR waveform_reader_error_quark ()
 
 struct _WaveformReaderPrivate
 {
@@ -40,6 +41,12 @@ static void waveform_reader_finalize (GObject *gobject);
 static void waveform_reader_dispose (GObject *gobject);
 
 G_DEFINE_TYPE (WaveformReader, waveform_reader, G_TYPE_OBJECT);
+
+GQuark
+waveform_reader_error_quark (void)
+{
+  return g_quark_from_static_string ("waveform-reader-error-quark");
+}
 
 // instance initialisation
 static void
@@ -126,7 +133,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 			// if file can't be accessed, return GError
 			if(strcmp(GST_OBJECT_NAME (msg->src), "source") == 0 && strcmp(err->message, "Resource not found.") == 0) {
 				g_message("Stream provided by URI not found.");
-				self->priv->err = g_error_new(2, 1, "File not found. Check it's path and/or access permissions.");
+				self->priv->err = g_error_new(WAVEFORM_READER_ERROR, WAVEFORM_READER_ERROR_NO_FILE, "File not found. Check it's path and/or access permissions.");
 			}
 			else {
 				// if it's another Gstreamer error, just forward it to the app for now
@@ -273,7 +280,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 	// return API error about problems with gstreamer core installation
 	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
 		g_printerr ("One element could not be created. Exiting.\n");
-		reader->priv->err = g_error_new(1, 1, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
+		reader->priv->err = g_error_new(WAVEFORM_READER_ERROR, WAVEFORM_READER_ERROR_NO_ELEMENT, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
 		return NULL;
 	}
 
@@ -430,3 +437,4 @@ GList * waveform_reader_get_subreadings (WaveformLevelReading * reading) {
 	else
 			return (GList*)g_ptr_array_index(reading->subreadings, 0);
 }
+

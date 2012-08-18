@@ -38,6 +38,11 @@ typedef struct _WaveformReader        WaveformReader;
 typedef struct _WaveformReaderClass   WaveformReaderClass;
 typedef struct _WaveformReaderPrivate WaveformReaderPrivate;
 
+/* WaveformReaderError enumeration */
+typedef enum {
+	WAVEFORM_READER_ERROR_NO_FILE,	  /* File can't be found */
+	WAVEFORM_READER_ERROR_NO_ELEMENT  /* Basic Gstreamer elements can't be created */
+} WaveformReaderError;
 
 /**
  * WaveformReader:
