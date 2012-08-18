@@ -31,7 +31,7 @@ struct _WaveformDrawingPrivate
   // variables for width and height
   int width;
   int height;
-  GdkRectangle *cacheArea;
+  GdkRectangle cacheArea;
   cairo_surface_t *sourceSurface;
 };
 
@@ -39,6 +39,7 @@ static void waveform_drawing_class_init(WaveformDrawingClass *klass);
 static void waveform_drawing_init(WaveformDrawing *waveform);
 static void waveform_drawing_dispose(GObject *object);
 static void waveform_drawing_finalize(GObject *object);
+gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea);
 
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
 
@@ -51,8 +52,11 @@ self->priv = WAVEFORM_DRAWING_GET_PRIVATE (self);
 self->priv->width = -1;
 self->priv->height = -1;
 self->priv->data = NULL;
-self->priv->cacheArea = {0,0,0,0};
-drawing->self->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
+self->priv->cacheArea.x = 0;
+self->priv->cacheArea.y = 0;
+self->priv->cacheArea.width = 0;
+self->priv->cacheArea.height = 0;
+self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
 }
 
 static void
@@ -87,43 +91,53 @@ GtkDrawingArea * waveform_drawing_new(void)
 
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
 
-	WaveformDrawing *drawing = (WaveformDrawing*)widget;
-	GdkRectangle *cairoClipArea;
-	gboolean fits = gdk_cairo_get_clip_rectangle(cr, cairoClipArea);
+	WaveformDrawing *self = (WaveformDrawing*)widget;
+	GdkRectangle cairoClipArea;
+	gboolean fits = gdk_cairo_get_clip_rectangle(cr, &cairoClipArea);
+	
 	// if waveform isn't showed, don't care to draw it
 	if(fits == FALSE)
-		return TRUE;
-	gboolean success = waveform_drawing_waveform(widget, cr, cairoClipArea);
-	cairo_set_source_surface(cr, drawing->priv->sourceSurface, x, y);
+		g_message("FALSE");
+	if(fits == TRUE)
+		g_message("TRUE");
+	gboolean success = waveform_drawing_waveform(widget, cairoClipArea);
+	cairo_set_source_surface(cr, self->priv->sourceSurface, self->priv->cacheArea.x, self->priv->cacheArea.y);
 	cairo_paint(cr);
 	return TRUE;
 }
 
-gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr, GdkRectangle *cairoClipArea)
+gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea)
 {
 	g_message("drawing.");
 	WaveformDrawing *self = WAVEFORM_DRAWING(widget);
 
 	// get allocated dimensions
-	GdkRectangle *allocatedArea  = {0,0,0,0};
+	GtkAllocation allocatedArea;
+	allocatedArea.width = 0;
+	allocatedArea.height = 0;
+	allocatedArea.x = 0;
+	allocatedArea.y = 0;
+	
 	gtk_widget_get_allocation(widget, &allocatedArea);
 	int width = allocatedArea.width;
 	int height = allocatedArea.height;
 	//g_message("Allocation: %i %i", width, height);
 
-	// We take tripple of exposed area
-	GdkRectangle *drawingArea = {cairoClipArea.x - allocatedArea.width, allocatedArea.y, allocatedArea.width*3, allocatedArea.height};
-	// set this drawingArea as already cached
-	self->priv->cacheArea = drawingArea;
+	// We take tripple of exposed area and set it as cached area
+	self->priv->cacheArea.x = cairoClipArea.x - allocatedArea.width;
+	self->priv->cacheArea.y = allocatedArea.y;
+	self->priv->cacheArea.width = allocatedArea.width*3;
+	self->priv->cacheArea.height = allocatedArea.height;
+
 	// creating new surface to draw on
-	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, drawingArea.width, drawingArea.height);
+	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, self->priv->cacheArea.width, self->priv->cacheArea.height);
 	// to draw we need new context
 	cairo_t *context = cairo_create(self->priv->sourceSurface);
 
 	// drawing white background 
 	cairo_set_line_width (context, 2.0);
 	cairo_set_antialias (context, CAIRO_ANTIALIAS_SUBPIXEL);
-	cairo_rectangle(0, 0, drawingArea.width, drawingArea.height);
+	cairo_rectangle(context, 0, 0, self->priv->cacheArea.width, self->priv->cacheArea.height);
 
 	const GdkRGBA background_color = {1.0, 1.0, 1.0, 1.0};
 	gdk_cairo_set_source_rgba(context, &background_color);
@@ -179,7 +193,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, cairo_t *cr, GdkRectangle 
 		  } while (data != NULL);
     }
 	//levels gradient fill
-	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, rect.height);
+	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, self->priv->cacheArea.height);
 	cairo_pattern_add_color_stop_rgba(gradient, 0.2, 114./255, 159./255, 207./255, 1);
 	cairo_pattern_add_color_stop_rgba(gradient, 1, 52./255, 101./255, 164./255, 1);
 	cairo_set_source(context, gradient);
