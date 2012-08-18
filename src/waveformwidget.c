@@ -168,23 +168,22 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			GArray *levels = (GArray*)reading->levels;
 			// level of channel
 			gdouble level = g_array_index(levels, gdouble, 0);
-			g_message("Level #1 %f", level);
+			//g_message("Level #1 %f", level);
 			// convert to coordinates
 			// FIXME temporary fix with using Jokosher method
 			gdouble decibel_range = 80;
 			// if level is maximum negative floated number, we crop it to -decibel_range
 			if(level == -DBL_MAX)
 				level = 0 - decibel_range;
-			g_message("Level #2 %f", level);
+			//g_message("Level #2 %f", level);
 			level = (gdouble)fmin(level, (gdouble)decibel_range);
 			level = (gdouble)fmax(level, (gdouble)-decibel_range);
 			level = level  + decibel_range;
 			peak = (int)((level/decibel_range) * height);
-			g_message("Level #3 %f", level);
+			//g_message("Level #3 %f", level);
 			cairo_line_to(context, x, peak);
-			//cairo_stroke(cr);
 			// increase x coordinates
-			x = x+3;
+			x = x + 5;
 			// currently if we reach end of allocated space, break from loop
 			// otherwise countinue until data is empty
 			if(x > self->priv->cacheArea.width)
@@ -192,7 +191,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			data = g_list_next(data);
 		  } while (data != NULL);
     }
-	//levels gradient fill
+	//experimental levels gradient fill
 	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, self->priv->cacheArea.height);
 	cairo_pattern_add_color_stop_rgba(gradient, 0.2, 114./255, 159./255, 207./255, 1);
 	cairo_pattern_add_color_stop_rgba(gradient, 1, 52./255, 101./255, 164./255, 1);
