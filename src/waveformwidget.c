@@ -49,8 +49,6 @@ static void
 waveform_drawing_init(WaveformDrawing *self)
 {
 self->priv = WAVEFORM_DRAWING_GET_PRIVATE (self);
-self->priv->width = -1;
-self->priv->height = -1;
 self->priv->data = NULL;
 self->priv->cacheArea.x = 0;
 self->priv->cacheArea.y = 0;
@@ -191,7 +189,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			data = g_list_next(data);
 		  } while (data != NULL);
     }
-	//experimental levels gradient fill
+	//experimental levels gradient fill - this is rewrite of Jokosher default waveform
 	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, self->priv->cacheArea.height);
 	cairo_pattern_add_color_stop_rgba(gradient, 0.2, 114./255, 159./255, 207./255, 1);
 	cairo_pattern_add_color_stop_rgba(gradient, 1, 52./255, 101./255, 164./255, 1);

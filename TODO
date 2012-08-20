@@ -1,11 +1,19 @@
 Stuff I have to do
 
-# Needed fixes in Gstreamer 'level' element
+# Gstreamer 'level' element
 * Need to provide posibility to split buffer and therefore have less interval than buffer limits
 * Need to provide posibility to get low peak of interval
 
-# Initial Widget code
-* Create waveform using rms values first
+# WaveformData
+* Go trough transfer anotations for WaveformData
+* Problems with NULL result passing to waveform_data_add, please check this
 
-# Go trough transfer anotations for WaveformData
-# Problems with NULL result passing to waveform_data_add, please check this
+# WaveformDrawing
+* Zoom level logic - how to handle it
+Mostly question how to identify different zoom levels - one idea is to have enum struct with
+identifiers of zoom levels and then bind them to multipliers. Rate will be samples per second.
+* Rewrite of Waveform drawing logic and implementing subclasses of different waveforms
+* Style support
+
+# WaveformReader
+* Async get_levels version
