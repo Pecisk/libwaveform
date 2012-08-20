@@ -1,6 +1,6 @@
 libwaveform is library containing waveform reader, data model and widget using Gstreamer, Gtk+ and Cairo
 
-tests/ - level reading test using Gstreamer in C and in Python using GObject Introspection. Spreadsheet with comparable testing wav and ogg versions.
+demo/ - level reading test using Gstreamer in C and in Python using GObject Introspection. Spreadsheet with comparable testing wav and ogg versions.
 src/ - source of reader, data model and widget elements
 po/ - gettext translations
 
@@ -24,10 +24,5 @@ After extracting cd into libwaveform directory and issue commands to build and i
 
 TESTING
 
-Easiest way to test library is from Python using GObject Introspection. Try to do this after entering
-python interactive interpretator:
-
-from gi.repository import Waveform # import Waveform GObject class
-reader = Waveform.Reader.new() # create new reader object
-levels = reader.get_levels("/path/to/audio.file.wav") # get levels into list of WaveformLevelReading
-
+Easiest way to test library is from Python using GObject Introspection. Try to run demo/demo.py script.
+It requires Gstreamer 1.0 and Gtk+-3.
