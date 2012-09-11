@@ -45,12 +45,14 @@ struct _WaveformData
 {
 	GObject parent_instance;
 	WaveformDataPrivate *priv;
+	gchar *file_name;
 };
 
 GType waveform_data_get_type (void) G_GNUC_CONST;
 WaveformData * waveform_data_new(void);
 gboolean waveform_data_add (WaveformData *self, GList *readings);
 GList * waveform_data_get (WaveformData *self);
+void waveform_data_set_file_name (WaveformData *self, gchar *name);
 
 G_END_DECLS
 

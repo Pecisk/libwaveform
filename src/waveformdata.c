@@ -257,3 +257,13 @@ void add_each_subreading(gpointer data, gpointer user_data) {
 	}
 	g_message("finished.\n");
 }
+
+void waveform_data_set_file_name (WaveformData *self, gchar *name) {
+	// FIXME this function will provide file name which data is stored by WaveformData
+	// FIXME this is temporary solution for passing name from reader to data
+	// FIXME what to do if it has valid file name already?
+	// FIXME file name validity? same for get_levels
+	self->priv = WAVEFORM_DATA_GET_PRIVATE (self);
+	self->priv->file_name = name;
+	return;
+}
