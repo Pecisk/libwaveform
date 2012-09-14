@@ -45,7 +45,7 @@ struct _WaveformData
 {
 	GObject parent_instance;
 	WaveformDataPrivate *priv;
-	gchar *file_name;
+
 };
 
 GType waveform_data_get_type (void) G_GNUC_CONST;

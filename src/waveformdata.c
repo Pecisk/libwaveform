@@ -32,6 +32,14 @@ struct _WaveformDataPrivate
   GList *active_rough;
   // Current active element of detailed reading of the list you process
   GList *active_detailed;
+  // System path of file name
+  gchar *file_name;
+  // Array of each zoom level reading interval - t.i. zoom_levels[7] = 0.1
+  // FIXME currently we have fixed set of zoom levels configured manually
+  // However I would have them customised and their intervals changed 
+  // as user needs
+  GArray zoom_levels;
+	
 };
 
 G_DEFINE_TYPE (WaveformData, waveform_data, G_TYPE_OBJECT);
@@ -45,6 +53,10 @@ waveform_data_init (WaveformData *self)
 	self->priv->active_rough = NULL;
 	self->priv->active_detailed = NULL;
 	self->priv->readings = NULL;
+	self->priv->zoom_levels = g_array_sized_new(FALSE, FALSE, sizeof(gfloat), 3);
+	g_array_insert_val(self->priv->zoom_levels, 0, 0.05);
+	g_array_insert_val(self->priv->zoom_levels, 1, 0.1);
+	g_array_insert_val(self->priv->zoom_levels, 1, 0.2);
 }
 
 static void
