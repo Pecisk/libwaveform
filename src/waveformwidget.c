@@ -33,7 +33,8 @@ struct _WaveformDrawingPrivate
 	int height;
 	GdkRectangle cacheArea;
 	cairo_surface_t *sourceSurface;
-	gint zoom_level;
+	gfloat current_zoom_level, max_zoom_level, min_zoom_level;
+	gint zoom_level_step;
 };
 
 static void waveform_drawing_class_init(WaveformDrawingClass *klass);
@@ -41,10 +42,36 @@ static void waveform_drawing_init(WaveformDrawing *waveform);
 static void waveform_drawing_dispose(GObject *object);
 static void waveform_drawing_finalize(GObject *object);
 gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea);
-
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
+// Zoom in and out
+gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform);
+gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform);
+
 
 G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
+
+
+void waveform_drawing_zoom_out(WaveformDrawing *waveform) {
+	WaveformDrawing *self = (WaveformDrawing*)widget;
+	gfloat new_current_zoom_level = self->priv->current_zoom_level * 2;
+	if(new_current_zoom_level > self->priv->max_zoom_level)
+		return FALSE;
+	else {
+		self->priv->current_zoom_level = new_current_zoom_level;
+		return TRUE;
+	}
+}
+
+void waveform_drawing_zoom_in(WaveformDrawing *waveform) {
+	WaveformDrawing *self = (WaveformDrawing*)widget;
+	gfloat new_current_zoom_level = self->priv->current_zoom_level / 2;
+	if(new_current_zoom_level < self->priv->min_zoom_level)
+		return FALSE;
+	else {
+		self->priv->current_zoom_level = new_current_zoom_level;
+		return TRUE;
+	}
+}
 
 static void
 waveform_drawing_init(WaveformDrawing *self)
@@ -56,7 +83,10 @@ self->priv->cacheArea.y = 0;
 self->priv->cacheArea.width = 0;
 self->priv->cacheArea.height = 0;
 self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
-self->priv->zoom_level = 1;
+self->priv->current_zoom_level = 1;
+self->priv->max_zoom_level = 1000;
+self->priv->min_zoom_level = 0.125;
+self->priv->zoom_level_step = 2;
 }
 
 static void
