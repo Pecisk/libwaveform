@@ -44,8 +44,7 @@ static void waveform_drawing_finalize(GObject *object);
 gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea);
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
 // Zoom in and out
-gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform);
-gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform);
+
 
 
 G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);

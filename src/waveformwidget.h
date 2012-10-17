@@ -65,6 +65,8 @@ struct _WaveformDrawingClass {
 GType waveform_drawing_get_type(void);
 GtkDrawingArea * waveform_drawing_new(void);
 gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_model);
+gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform);
+gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform);
 
 G_END_DECLS
 
