@@ -50,8 +50,8 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr);
 G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
 
 
-void waveform_drawing_zoom_out(WaveformDrawing *waveform) {
-	WaveformDrawing *self = (WaveformDrawing*)widget;
+gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
+	WaveformDrawing *self = (WaveformDrawing*)waveform;
 	gfloat new_current_zoom_level = self->priv->current_zoom_level * 2;
 	if(new_current_zoom_level > self->priv->max_zoom_level)
 		return FALSE;
@@ -61,8 +61,8 @@ void waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 	}
 }
 
-void waveform_drawing_zoom_in(WaveformDrawing *waveform) {
-	WaveformDrawing *self = (WaveformDrawing*)widget;
+gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
+	WaveformDrawing *self = (WaveformDrawing*)waveform;
 	gfloat new_current_zoom_level = self->priv->current_zoom_level / 2;
 	if(new_current_zoom_level < self->priv->min_zoom_level)
 		return FALSE;
@@ -184,7 +184,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 		// get data model
 		WaveformData *data_model = WAVEFORM_DATA(self->priv->data);
 		// if zoom_level is default, just follow default list
-		if(self->priv->zoom_level == 1) {
+		if(self->priv->current_zoom_level == 1) {
 			// default zoom level
 			// do your usual here
 			// get linked list of data
@@ -224,7 +224,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 				data = g_list_next(data);
 			} while (data != NULL);
 			
-		} else if(self->priv->zoom_level != 1) {
+		} else if(self->priv->current_zoom_level != 1) {
 		   // this means zoom_level is anything but default zoom level
 			// get linked list of data
 			GList *data_list = waveform_data_get(data_model);
@@ -238,7 +238,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			GPtrArray *subreadings_array = (GPtrArray*)reading->subreadings;
 			// trying to get zoom level we need
 			// FIXME what about different scenarios when there's no data?
-			GList *data = g_ptr_array_index(subreadings_array, self->priv->zoom_level);
+			//GList *data = g_ptr_array_index(subreadings_array, self->priv->current_zoom_level);
 			if(data == NULL) {
 				// FIXME request data from reader?
 			}
