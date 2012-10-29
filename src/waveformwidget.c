@@ -35,6 +35,8 @@ struct _WaveformDrawingPrivate
 	cairo_surface_t *sourceSurface;
 	gfloat current_zoom_level, max_zoom_level, min_zoom_level;
 	gint zoom_level_step;
+	gfloat default_reading_interval;
+	gint min_wave_threshold, max_wave_threshold;
 };
 
 static void waveform_drawing_class_init(WaveformDrawingClass *klass);
@@ -57,6 +59,8 @@ gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 		return FALSE;
 	else {
 		self->priv->current_zoom_level = new_current_zoom_level;
+		g_message("Zoom out: %f",self->priv->current_zoom_level);
+		gtk_widget_queue_draw((GtkWidget*)waveform);
 		return TRUE;
 	}
 }
@@ -68,8 +72,11 @@ gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 		return FALSE;
 	else {
 		self->priv->current_zoom_level = new_current_zoom_level;
+		g_message("Zoom in: %f",self->priv->current_zoom_level);
+		gtk_widget_queue_draw((GtkWidget*)waveform);
 		return TRUE;
 	}
+	
 }
 
 static void
@@ -82,10 +89,17 @@ self->priv->cacheArea.y = 0;
 self->priv->cacheArea.width = 0;
 self->priv->cacheArea.height = 0;
 self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 0, 0);
-self->priv->current_zoom_level = 1;
+// default zoom level 30 pixels per second, to satisfy 3 pixel per wave requirement
+self->priv->current_zoom_level = 30;
 self->priv->max_zoom_level = 1000;
 self->priv->min_zoom_level = 0.125;
 self->priv->zoom_level_step = 2;
+
+// FIXME reading interval for calculcations, must be stored somewhere else
+self->priv->default_reading_interval = 0.1;
+// default min and max threshold - FIXME this really should be changable from subclasses
+self->priv->min_wave_threshold = 3;
+self->priv->max_wave_threshold = 6;
 }
 
 static void
@@ -172,111 +186,89 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	gdk_cairo_set_source_rgba(context, &background_color);
 	cairo_fill(context);
 	
-	// initialise x coordinates
-	int x = 1;
-	cairo_move_to (context, 1.0, 1.0);
+	// initialise coordinates
+	int x = 0;
+	int peak = 0;
 	
 	// if there's WaveformData to draw, let's do it
-	if(self->priv->data == NULL)
+	if(self->priv->data == NULL) {
 		g_message("There is no data.");
-	if(self->priv->data != NULL) {
+		// FIXME how to show nicely that there's no data?
+		return TRUE;
+	}
+	else if(self->priv->data != NULL) {
 		g_message("Data is available.");
 		// get data model
 		WaveformData *data_model = WAVEFORM_DATA(self->priv->data);
-		// if zoom_level is default, just follow default list
-		if(self->priv->current_zoom_level == 1) {
-			// default zoom level
-			// do your usual here
-			// get linked list of data
-			GList *data = waveform_data_get(data_model);
-			// do a loop while we can read data linked list
-			data = g_list_first(data);
-			int peak = 0;
-			do {
-				cairo_move_to(context, x-1, peak);
-				// first get reading
-				//g_message("Get a reading.");
-				WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
-				// then array of chanel readings
-				GArray *levels = (GArray*)reading->levels;
-				// level of channel
-				gdouble level = g_array_index(levels, gdouble, 0);
-				//g_message("Level #1 %f", level);
-				// convert to coordinates
-				// FIXME temporary fix with using Jokosher method
-				gdouble decibel_range = 80;
-				// if level is maximum negative floated number, we crop it to -decibel_range
-				if(level == -DBL_MAX)
-					level = 0 - decibel_range;
-				//g_message("Level #2 %f", level);
-				level = (gdouble)fmin(level, (gdouble)decibel_range);
-				level = (gdouble)fmax(level, (gdouble)-decibel_range);
-				level = level  + decibel_range;
-				peak = (int)((level/decibel_range) * height);
-				//g_message("Level #3 %f", level);
-				cairo_line_to(context, x, peak);
-				// increase x coordinates
-				x = x + 5;
-				// currently if we reach end of allocated space, break from loop
-				// otherwise countinue until data is empty
-				if(x > self->priv->cacheArea.width)
-					break;
-				data = g_list_next(data);
-			} while (data != NULL);
+		// find a suitable reading interval
+		gfloat reading_interval = self->priv->default_reading_interval;
+		// this will be step how much wide wave will be
+		gfloat pixels_per_reading = 0.0;
+		do
+		{
+			gfloat readings_per_second = 1/reading_interval;
+			pixels_per_reading = self->priv->current_zoom_level/readings_per_second;
 			
-		} else if(self->priv->current_zoom_level != 1) {
-		   // this means zoom_level is anything but default zoom level
-			// get linked list of data
-			GList *data_list = waveform_data_get(data_model);
-			// do a loop while we can read data linked list
-			data_list = g_list_first(data_list);
-			int peak = 0;
-			do {
-			// doing default zoom level loop, while skipping contents, and getting subreadings
-			// for corresponding zoom level 
-			WaveformLevelReading *reading = (WaveformLevelReading*)data_list->data;
-			GPtrArray *subreadings_array = (GPtrArray*)reading->subreadings;
-			// trying to get zoom level we need
-			// FIXME what about different scenarios when there's no data?
-			//GList *data = g_ptr_array_index(subreadings_array, self->priv->current_zoom_level);
-			if(data == NULL) {
-				// FIXME request data from reader?
-			}
-			// going trough subreadings
-				do {
-					cairo_move_to(context, x-1, peak);
-					// first get reading
-					//g_message("Get a reading.");
-					WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
-					// then array of chanel readings
-					GArray *levels = (GArray*)reading->levels;
-					// level of channel
-					gdouble level = g_array_index(levels, gdouble, 0);
-					//g_message("Level #1 %f", level);
-					// convert to coordinates
-					// FIXME temporary fix with using Jokosher method
-					gdouble decibel_range = 80;
-					// if level is maximum negative floated number, we crop it to -decibel_range
-					if(level == -DBL_MAX)
-						level = 0 - decibel_range;
-					//g_message("Level #2 %f", level);
-					level = (gdouble)fmin(level, (gdouble)decibel_range);
-					level = (gdouble)fmax(level, (gdouble)-decibel_range);
-					level = level  + decibel_range;
-					peak = (int)((level/decibel_range) * height);
-					//g_message("Level #3 %f", level);
-					cairo_line_to(context, x, peak);
-					// increase x coordinates
-					x = x + 5;
-					// currently if we reach end of allocated space, break from loop
-					// otherwise countinue until data is empty
-					if(x > self->priv->cacheArea.width)
-						break;
-					data = g_list_next(data);
-				} while (data != NULL);
-			data_list = g_list_next(data_list);
-			} while (data_list != NULL);
+			// checking if wave is not too narrow or too wide
+			if(pixels_per_reading < (gfloat)self->priv->min_wave_threshold)
+			{
+				// if it's too narrow, we should increase reading interval
+				reading_interval = reading_interval * 2;
+			} else if(pixels_per_reading > (gfloat)self->priv->max_wave_threshold)
+			{
+				// if it's too wide, we should decrease reading interval
+				reading_interval = reading_interval / 2;
+			} else
+				break;
 		}
+		while(1);
+		// now we have pixels_per_reading as step for drawing wave, and reading_interval for interval between readings
+		g_message("pixels_per_reading %f reading_interval %f", pixels_per_reading, reading_interval);
+		// get linked list of data
+		GList *data = waveform_data_get(data_model);
+		// do a loop while we can read data linked list
+		data = g_list_first(data);
+
+		// move cairo cursor to the begining
+		cairo_move_to(context, 0, 0);
+		
+		do {
+			// first get reading
+			//g_message("Get a reading.");
+			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
+			// then array of chanel readings
+			GArray *levels = (GArray*)reading->levels;
+			// level of first channel - FIXME this should be configurable
+			gdouble level = g_array_index(levels, gdouble, 0);
+			//g_message("Level #1 %f", level);
+			
+			// convert to coordinates using Jokosher method for creating int from float values
+			gdouble decibel_range = 80;
+			// if level is maximum negative floated number, we crop it to -decibel_range
+			if(level == -DBL_MAX)
+				level = 0 - decibel_range;
+
+			//g_message("Level #2 %f", level);
+			level = (gdouble)fmin(level, (gdouble)decibel_range);
+			level = (gdouble)fmax(level, (gdouble)-decibel_range);
+			level = level  + decibel_range;
+			peak = (int)((level/decibel_range) * height);
+
+			//g_message("Level #3 %f", level);
+			cairo_line_to(context, x, peak);
+
+			// increase x coordinates - adding step
+			x = x + (gint)pixels_per_reading;
+			//x = x + 3;
+			//g_message("x coordinates %i", (gint)pixels_per_reading);
+			// currently if we reach end of allocated space, break from loop
+			// otherwise countinue until data is empty
+			if(x > self->priv->cacheArea.width)
+				break;
+			// move cairo cursor back last drawing, so we can start from there
+			cairo_move_to(context, x-(gint)pixels_per_reading, peak);
+			data = g_list_next(data);
+		} while (data != NULL);
 		
     }
 	//experimental levels gradient fill - this is rewrite of Jokosher default waveform

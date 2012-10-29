@@ -225,7 +225,7 @@ void add_each_subreading(gpointer data, gpointer user_data) {
 		if(((WaveformLevelReading*)self->priv->active_rough->data)->subreadings == NULL)
 			{
 				// if subreadings are NULL, create it, create new GList and add it
-				((WaveformLevelReading*)self->priv->active_rough->data)->subreadings = g_ptr_array_new_sized(3);
+				((WaveformLevelReading*)self->priv->active_rough->data)->subreadings = g_ptr_array_sized_new(3);
 				GList *new_subreadings_list = NULL;
 				new_subreadings_list = g_list_append(new_subreadings_list, reading);
 				g_ptr_array_add(((WaveformLevelReading*)self->priv->active_rough->data)->subreadings, (gpointer)new_subreadings_list);
