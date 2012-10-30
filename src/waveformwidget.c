@@ -97,7 +97,8 @@ self->priv->zoom_level_step = 2;
 
 // FIXME reading interval for calculcations, must be stored somewhere else
 self->priv->default_reading_interval = 0.1;
-// default min and max threshold - FIXME this really should be changable from subclasses
+// default min and max threshold - FIXME this really should be changable from different
+// implementations of waveforms
 self->priv->min_wave_threshold = 3;
 self->priv->max_wave_threshold = 6;
 }
@@ -187,8 +188,8 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	cairo_fill(context);
 	
 	// initialise coordinates
-	int x = 0;
-	int peak = 0;
+	gfloat x = 0.0;
+	gfloat peak = 0.0;
 	
 	// if there's WaveformData to draw, let's do it
 	if(self->priv->data == NULL) {
@@ -208,7 +209,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 		{
 			gfloat readings_per_second = 1/reading_interval;
 			pixels_per_reading = self->priv->current_zoom_level/readings_per_second;
-			
+			g_message("Loop readings_per_second %f reading_interval %f", readings_per_second, reading_interval);
 			// checking if wave is not too narrow or too wide
 			if(pixels_per_reading < (gfloat)self->priv->min_wave_threshold)
 			{
@@ -223,14 +224,14 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 		}
 		while(1);
 		// now we have pixels_per_reading as step for drawing wave, and reading_interval for interval between readings
-		g_message("pixels_per_reading %f reading_interval %f", pixels_per_reading, reading_interval);
+		g_message("current_zoom_level %f pixels_per_reading %f reading_interval %f", self->priv->current_zoom_level, pixels_per_reading, reading_interval);
 		// get linked list of data
 		GList *data = waveform_data_get(data_model);
 		// do a loop while we can read data linked list
 		data = g_list_first(data);
 
 		// move cairo cursor to the begining
-		cairo_move_to(context, 0, 0);
+		cairo_move_to(context, 0.0, 0.0);
 		
 		do {
 			// first get reading
@@ -258,15 +259,15 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			cairo_line_to(context, x, peak);
 
 			// increase x coordinates - adding step
-			x = x + (gint)pixels_per_reading;
-			//x = x + 3;
+			x = x + pixels_per_reading;
+			
 			//g_message("x coordinates %i", (gint)pixels_per_reading);
 			// currently if we reach end of allocated space, break from loop
 			// otherwise countinue until data is empty
-			if(x > self->priv->cacheArea.width)
+			if((gint)x > self->priv->cacheArea.width)
 				break;
 			// move cairo cursor back last drawing, so we can start from there
-			cairo_move_to(context, x-(gint)pixels_per_reading, peak);
+			cairo_move_to(context, x-pixels_per_reading, peak);
 			data = g_list_next(data);
 		} while (data != NULL);
 		
