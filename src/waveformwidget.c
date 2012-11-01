@@ -33,7 +33,7 @@ struct _WaveformDrawingPrivate
 	int height;
 	GdkRectangle cacheArea;
 	cairo_surface_t *sourceSurface;
-	gfloat current_zoom_level, max_zoom_level, min_zoom_level;
+	gfloat default_zoom_level, current_zoom_level, max_zoom_level, min_zoom_level;
 	gint zoom_level_step;
 	gfloat default_reading_interval;
 	gint min_wave_threshold, max_wave_threshold;
@@ -77,6 +77,31 @@ gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 		return TRUE;
 	}
 	
+}
+
+gboolean waveform_drawing_zoom_default(WaveformDrawing *waveform) {
+	WaveformDrawing *self = (WaveformDrawing*)waveform;
+	self->priv->current_zoom_level = self->priv->default_zoom_level;
+	gtk_widget_queue_draw((GtkWidget*)waveform);
+	return TRUE;		
+}
+
+gboolean waveform_drawing_set_zoom(WaveformDrawing *waveform, gfloat max_zoom_level, gfloat min_zoom_level, gfloat def_zoom_level, gint zoom_level_step)
+{
+	// first check if values are negative
+	if(max_zoom_level <= 0 || min_zoom_level <= 0 || def_zoom_level <= 0 || zoom_level_step <= 0) {
+		g_message("One of zoom variables are negative or null. Not changing.");
+		// FIXME there's should be GError return
+		return FALSE;
+	}
+	// FIXME do a validity check for "nice" values - compare it to used min_wave_threshold and max_wave_threshold
+	WaveformDrawing *self = (WaveformDrawing*)waveform;
+	self->priv->max_zoom_level = max_zoom_level;
+	self->priv->min_zoom_level = min_zoom_level;
+	self->priv->default_zoom_level = def_zoom_level;
+	// reset current zoom level to default and redraw
+	waveform_drawing_zoom_default(waveform);
+	return TRUE;
 }
 
 static void

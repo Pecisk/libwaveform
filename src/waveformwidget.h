@@ -67,6 +67,7 @@ GtkDrawingArea * waveform_drawing_new(void);
 gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_model);
 gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform);
 gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform);
+gboolean waveform_drawing_set_zoom(WaveformDrawing *waveform, gfloat max_zoom_level, gfloat min_zoom_level, gfloat def_zoom_level, gint zoom_level_step); 
 
 G_END_DECLS
 
