@@ -9,9 +9,9 @@ Stuff I have to do
 * Problems with NULL result passing to waveform_data_add, please check this
 
 # WaveformDrawing
-* Zoom level logic - how to handle it
-Mostly question how to identify different zoom levels - one idea is to have enum struct with
-identifiers of zoom levels and then bind them to multipliers. Rate will be samples per second.
+* Zoom level logic
+Currently I'm going with 'pixels per second' concept as seen in Pitivi as it seems most logical.
+I also try to detect which interval is best to use to draw waveform. It has some flaws, but it's a start.
 * Rewrite of Waveform drawing logic and implementing subclasses of different waveforms
 * Style support
 

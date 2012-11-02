@@ -124,7 +124,7 @@ self->priv->zoom_level_step = 2;
 self->priv->default_reading_interval = 0.1;
 // default min and max threshold - FIXME this really should be changable from different
 // implementations of waveforms
-self->priv->min_wave_threshold = 3;
+self->priv->min_wave_threshold = 2;
 self->priv->max_wave_threshold = 6;
 }
 
