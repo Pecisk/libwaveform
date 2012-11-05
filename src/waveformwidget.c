@@ -54,7 +54,7 @@ G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
 
 gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 	WaveformDrawing *self = (WaveformDrawing*)waveform;
-	gfloat new_current_zoom_level = self->priv->current_zoom_level * 2;
+	gfloat new_current_zoom_level = self->priv->current_zoom_level / 2;
 	if(new_current_zoom_level > self->priv->max_zoom_level)
 		return FALSE;
 	else {
@@ -67,7 +67,7 @@ gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 
 gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 	WaveformDrawing *self = (WaveformDrawing*)waveform;
-	gfloat new_current_zoom_level = self->priv->current_zoom_level / 2;
+	gfloat new_current_zoom_level = self->priv->current_zoom_level * 2;
 	if(new_current_zoom_level < self->priv->min_zoom_level)
 		return FALSE;
 	else {
