@@ -18,7 +18,7 @@ INSTALLING
 
 Clone newest code of library from github repository here https://github.com/Pecisk/libwaveform (or download it as zip).
 After extracting cd into libwaveform directory and issue commands to build and install library:
-* ./autogen.sh (provide --prefix if you want to provide custom root path)
+* ./autogen.sh (provide --prefix if you want to provide custom root path, for Fedora 18 use --prefix=/usr)
 * make
 * make install
 
