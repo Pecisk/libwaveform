@@ -345,8 +345,8 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			data = g_list_next(data);
 			} while (data != NULL);
 		}
-    }
-	//experimental levels gradient fill - this is rewrite of Jokosher default waveform
+    
+    //experimental levels gradient fill - this is rewrite of Jokosher default waveform
 	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, self->priv->cacheArea.height);
 	cairo_pattern_add_color_stop_rgba(gradient, 0.2, 114./255, 159./255, 207./255, 1);
 	cairo_pattern_add_color_stop_rgba(gradient, 1, 52./255, 101./255, 164./255, 1);
@@ -359,6 +359,8 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	cairo_set_line_join(context, CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_width(context, 2.0);
 	cairo_stroke(context);
+    // end of if there is data to draw
+    }
 	
 	return TRUE;
 }
