@@ -382,6 +382,156 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
 
 
 /**
+ * waveform_reader_get_initial_levels:
+ * @reader: pointer to #WaveformReader object which reads levels.
+ * @file_location: a pointer to a #gchar array to file location.
+ * @interval: #guint64 of level reading period, if zero, then 0.1 s (as 120 000 000 ns) period is used by default.
+ * @start: #guint64 of start of reading period in ns
+ * @finish: #guint64 of end of reading period in ns
+ * @err: pointer-to-pointer of GError to report possible failures
+ * 
+ * Creates a new #WaveformData with file name, audio stream length and #GList of audio level readings in #WaveformLevelReading structures.
+ *
+ * Returns: (transfer none) (element-type Waveform.Data): The new #WaveformData
+ *
+ * Since: 0.1
+ */
+
+WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err) {
+
+	// There's no errors there so far
+	reader->priv->err = NULL;
+	
+	// Creating our own context
+    reader->priv->context = g_main_context_new();
+	
+    // Creating our own main loop
+	reader->priv->loop = g_main_loop_new(reader->priv->context, FALSE);
+
+	// Initialising GList for returning readings
+	reader->priv->readings = NULL;
+	
+	GstElement *decoder, *converter, *level_element, *fakesink;
+	GstElement *pipeline;
+	GstBus *bus;
+	GSource *source;
+	guint id;
+
+	pipeline = gst_pipeline_new("level-reader-pipeline");
+	decoder = gst_element_factory_make("uridecodebin","codec-decoder");
+	converter = gst_element_factory_make("audioconvert","audio-converter");
+	level_element = gst_element_factory_make("level","level-element");
+	fakesink = gst_element_factory_make("fakesink", "fake-sink");
+	
+	// return API error about problems with gstreamer core installation
+	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
+		g_printerr ("One element could not be created. Exiting.\n");
+		reader->priv->err = g_error_new(WAVEFORM_READER_ERROR, WAVEFORM_READER_ERROR_NO_ELEMENT, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
+		return NULL;
+	}
+
+	// set up file location
+	
+	g_object_set(G_OBJECT(decoder), "uri", file_location, NULL);
+	// set caps for exposing only raw audio
+	GstCaps *caps = gst_caps_new_empty_simple("audio/x-raw");
+	g_object_set(G_OBJECT(decoder), "caps", caps, NULL);
+	// setting caps free
+	gst_caps_unref(caps);
+	// setting interval if it's not zero, otherwise use default
+	if(interval != 0)
+		g_object_set(G_OBJECT(level_element), "interval", interval, NULL);
+	
+	// add elements to the pipeline
+	gst_bin_add_many (GST_BIN (pipeline), decoder, converter, level_element, fakesink, NULL);
+	//g_message("Elements added");
+	// link elements
+	gst_element_link_many (converter, level_element, fakesink, NULL);
+	g_signal_connect (decoder, "pad-added", G_CALLBACK (on_pad_added), converter);
+	//g_message("Elements linked");
+	
+	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
+	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+
+	// get GSource of bus
+	source = gst_bus_create_watch (bus);
+
+	// set helper function so ansync messages would be converted to signals
+	g_source_set_callback (source, (GSourceFunc) gst_bus_async_signal_func, NULL, NULL);
+
+	// get id 
+    id = g_source_attach (source, reader->priv->context);
+	
+
+	// FIXME do something if source can't be attached to context, t.i. id == 0;
+
+	// catch eos messages for stream end
+	g_signal_connect (bus, "message::eos", (GCallback) bus_call, reader);
+	// catch errors in bus
+	g_signal_connect (bus, "message::error", (GCallback) bus_call, reader);
+
+	if(finish != 0) 
+		{
+			// FIXME let's try to set state to PAUSED
+			GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+			if(r != GST_STATE_CHANGE_FAILURE)
+			{
+			// FIXME try to get state and work if any error gets issued
+				GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
+			}
+			g_message("Doing seeking %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT"\n", start, finish);
+			// do seeking if finish is not zero
+			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE,
+                         GST_SEEK_TYPE_SET, start,
+                         GST_SEEK_TYPE_SET, finish);
+			// catch segment done messages
+			//g_signal_connect (bus, "message::segment-done", (GCallback) bus_call, reader);
+		}
+
+	// catch element messages for 'level'
+    g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
+	
+	// playing back pipeline
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
+
+	// kicking off our custom loop
+	g_main_loop_run(reader->priv->loop);
+	
+	// pausing pipeline
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+	//g_message("State null");
+	// unref/free all stuff
+
+	// has to g_source_destroy, as it's attached to non-default context
+	g_source_destroy(source);
+	// context has source ref now
+	g_source_unref (source);
+	g_main_loop_unref(reader->priv->loop);
+	g_main_context_unref(reader->priv->context);
+
+	gst_object_unref(bus);
+	gst_object_unref(GST_OBJECT(pipeline));
+    //g_message("Business finished");
+	
+	// as we prepended objects, reverse list
+	reader->priv->readings = g_list_reverse(reader->priv->readings);
+	g_message("Size: %i", g_list_length(reader->priv->readings));
+
+	// make error return in 'err' if there is any
+	g_propagate_error(err, reader->priv->err);
+	// if there is error, return NULL in result
+	if(err == NULL)
+		return NULL;
+
+	// create WaveformData and return
+	WaveformData *data = waveform_data_new();
+	waveform_data_add(data, reader->priv->readings);
+
+	// return pointer to WaveformData
+	return data;
+}
+
+/**
  * waveform_reader_get_end_time:
  * @reading: pointer to #WaveformLevelReading object which has time and channel information of reading.
  *
