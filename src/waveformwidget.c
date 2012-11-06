@@ -55,28 +55,23 @@ G_DEFINE_TYPE (WaveformDrawing, waveform_drawing, GTK_TYPE_DRAWING_AREA);
 gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 	WaveformDrawing *self = (WaveformDrawing*)waveform;
 	gfloat new_current_zoom_level = self->priv->current_zoom_level / 2;
-	if(new_current_zoom_level > self->priv->max_zoom_level)
+	if(new_current_zoom_level < self->priv->min_zoom_level)
 		return FALSE;
-	else {
-		self->priv->current_zoom_level = new_current_zoom_level;
-		g_message("Zoom out: %f",self->priv->current_zoom_level);
-		gtk_widget_queue_draw((GtkWidget*)waveform);
-		return TRUE;
-	}
+	self->priv->current_zoom_level = new_current_zoom_level;
+	g_message("Zoom out: %f", self->priv->current_zoom_level);
+	gtk_widget_queue_draw((GtkWidget*)waveform);
+	return TRUE;
 }
 
 gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 	WaveformDrawing *self = (WaveformDrawing*)waveform;
 	gfloat new_current_zoom_level = self->priv->current_zoom_level * 2;
-	if(new_current_zoom_level < self->priv->min_zoom_level)
+	if(new_current_zoom_level > self->priv->max_zoom_level)
 		return FALSE;
-	else {
-		self->priv->current_zoom_level = new_current_zoom_level;
-		g_message("Zoom in: %f",self->priv->current_zoom_level);
-		gtk_widget_queue_draw((GtkWidget*)waveform);
-		return TRUE;
-	}
-	
+	self->priv->current_zoom_level = new_current_zoom_level;
+	g_message("Zoom in: %f", self->priv->current_zoom_level);
+	gtk_widget_queue_draw((GtkWidget*)waveform);
+	return TRUE;
 }
 
 gboolean waveform_drawing_zoom_default(WaveformDrawing *waveform) {
@@ -257,8 +252,62 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 
 		// move cairo cursor to the begining
 		cairo_move_to(context, 0.0, 0.0);
-		
-		do {
+
+		// if we have zoomed out from default reading and we have to add some
+		// together to get one 
+		if(reading_interval > self->priv->default_reading_interval)
+		{
+		g_message("reading_interval %f self->priv->default_reading_interval %f", reading_interval, self->priv->default_reading_interval);
+		// how many default intervals we have to accumulate to get current interval for zoom
+		int interval_bunch = (int)(reading_interval/self->priv->default_reading_interval);
+		int new_interval_bunch = 0;
+		int interval_bunch_sum = 0;
+			do {
+			// if we start over, reset bunch of intervals
+			if(new_interval_bunch == 0) {
+				new_interval_bunch = interval_bunch;
+				interval_bunch_sum = 0;
+			}
+			// first get reading
+			//g_message("Get a reading.");
+			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
+			// then array of chanel readings
+			GArray *levels = (GArray*)reading->levels;
+			// level of first channel - FIXME this should be configurable
+			gdouble level = g_array_index(levels, gdouble, 0);
+			
+			// convert to coordinates using Jokosher method for creating int from float values
+			gdouble decibel_range = 80;
+			// if level is maximum negative floated number, we crop it to -decibel_range
+			if(level == -DBL_MAX)
+				level = 0 - decibel_range;
+
+			level = (gdouble)fmin(level, (gdouble)decibel_range);
+			level = (gdouble)fmax(level, (gdouble)-decibel_range);
+			level = level  + decibel_range;
+			peak = (int)((level/decibel_range) * height);
+			
+			interval_bunch_sum = interval_bunch_sum + peak;
+			new_interval_bunch--;
+
+			// if have collected sum of bunch of intervals
+			// let's draw
+			if(new_interval_bunch == 0) {
+				cairo_line_to(context, x, peak);
+				// increase x coordinates - adding step
+				x = x + pixels_per_reading;
+				// currently if we reach end of allocated space, break from loop
+				// otherwise countinue until data is empty
+				if((gint)x > self->priv->cacheArea.width)
+					break;
+				// move cairo cursor back last drawing, so we can start from there
+				cairo_move_to(context, x-pixels_per_reading, peak);
+			}
+			data = g_list_next(data);
+			} while (data != NULL);
+		} else {
+		// if we are zooming in and not using accumulation
+			do {
 			// first get reading
 			//g_message("Get a reading.");
 			WaveformLevelReading *reading = (WaveformLevelReading*)data->data;
@@ -294,8 +343,8 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 			// move cairo cursor back last drawing, so we can start from there
 			cairo_move_to(context, x-pixels_per_reading, peak);
 			data = g_list_next(data);
-		} while (data != NULL);
-		
+			} while (data != NULL);
+		}
     }
 	//experimental levels gradient fill - this is rewrite of Jokosher default waveform
 	cairo_pattern_t *gradient = cairo_pattern_create_linear(0.0, 0.0, 0, self->priv->cacheArea.height);
