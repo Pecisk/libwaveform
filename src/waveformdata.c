@@ -49,6 +49,8 @@ waveform_data_init (WaveformData *self)
 	self->priv->active_rough = NULL;
 	self->priv->active_detailed = NULL;
 	self->priv->readings = NULL;
+	self->priv->file_location = "";
+	self->priv->length = 0;
 
 }
 
@@ -269,6 +271,6 @@ void waveform_data_set_file_name (WaveformData *self, gchar *name) {
 	// FIXME what to do if it has valid file name already?
 	// FIXME file name validity? same for get_levels
 	self->priv = WAVEFORM_DATA_GET_PRIVATE (self);
-	self->priv->file_name = name;
+	self->priv->file_location = name;
 	return;
 }

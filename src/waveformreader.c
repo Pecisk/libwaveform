@@ -502,6 +502,8 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	//g_message("State null");
 	// unref/free all stuff
 
+	element_query_duration (pipeline, GST_FORMAT_TIME, &(data->priv->length));
+	
 	// has to g_source_destroy, as it's attached to non-default context
 	g_source_destroy(source);
 	// context has source ref now
@@ -526,6 +528,8 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	// create WaveformData and return
 	WaveformData *data = waveform_data_new();
 	waveform_data_add(data, reader->priv->readings);
+	data->priv->length = 0;
+	data->priv->file_location = file_name;
 
 	// return pointer to WaveformData
 	return data;
