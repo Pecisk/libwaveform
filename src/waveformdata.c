@@ -33,7 +33,7 @@ struct _WaveformDataPrivate
   // Current active element of detailed reading of the list you process
   GList *active_detailed;
   // System path of file name
-  gchar *file_name;
+  gchar *file_location;
   // Length of audio in ns
   guint64 length;
 };

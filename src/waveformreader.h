@@ -23,6 +23,7 @@
 #include <glib-object.h>
 #include <gst/gst.h>
 #include "waveformlevelreading.h"
+#include "waveformdata.h"
 
 /*
  * Type macros.
@@ -74,6 +75,7 @@ GType waveform_reader_get_type (void);
  * Method definitions.
  */
 GList *	waveform_reader_get_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err);
+WaveformData *	waveform_reader_initial_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err);
 WaveformReader * waveform_reader_new(void);
 guint64 waveform_reader_get_start_time (WaveformLevelReading * reading);
 guint64 waveform_reader_get_end_time (WaveformLevelReading * reading);
