@@ -391,7 +391,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
  * @finish: #guint64 of end of reading period in ns
  * @err: pointer-to-pointer of GError to report possible failures
  * 
- * Creates a new #WaveformData with file name, audio stream length and #GList of audio level readings in #WaveformLevelReading structures.
+ * Creates a new #WaveformData with file name, audio stream length and #GList of initial audio level readings in #WaveformLevelReading structures.
  *
  * Returns: (transfer none) (element-type Waveform.Data): The new #WaveformData
  *
@@ -527,13 +527,11 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	if(err == NULL)
 		return NULL;
 
-	// create WaveformData and return
+	// create WaveformData, add file name,  and return
 	WaveformData *data = waveform_data_new();
 	waveform_data_add(data, reader->priv->readings);
-	//data->priv->length = (guint64)len;
-	//data->priv->length = 0;
-	//data->priv->file_location = file_location;
-	//data->priv->file_location = "";
+	waveform_data_set_length((guint64)len);
+	waveform_data_set_file_name(data, file_location);
 	// return pointer to WaveformData
 	return data;
 }

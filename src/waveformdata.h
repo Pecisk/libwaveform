@@ -53,6 +53,9 @@ WaveformData * waveform_data_new(void);
 gboolean waveform_data_add (WaveformData *self, GList *readings);
 GList * waveform_data_get (WaveformData *self);
 void waveform_data_set_file_name (WaveformData *self, gchar *name);
+gchar * waveform_data_get_file_name (WaveformData *self);
+void waveform_data_set_length (WaveformData *self, guint64 length);
+guint64 waveform_data_get_length (WaveformData *self);
 
 G_END_DECLS
 

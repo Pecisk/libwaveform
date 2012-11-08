@@ -435,7 +435,14 @@ gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_mo
 	g_return_val_if_fail(WAVEFORM_IS_DATA(data_model), FALSE);
 
 	self->priv->data = data_model;
+	
 	// set widget size accordingly
-	//gtk_widget_set_size_request ((GtkWidget*)self, width, height);
+	// first get current height of widget
+	GtkRequisition size_req;
+	gtk_widget_size_request ((GtkWidget*)self, size_req);
+	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
+	gint width = waveform_data_get_length(self->priv->data)/(self->priv->zoom_level*1000000000);
+	// set new size request with caluclated width
+	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req.height);
 	return TRUE;
 }
