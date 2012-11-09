@@ -398,7 +398,7 @@ GList * waveform_reader_get_levels(WaveformReader *reader, const gchar *file_loc
  * Since: 0.1
  */
 
-WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err) {
+WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const gchar *file_location, guint64 interval, guint64 start, guint64 finish, GError **err) {
 
 	// There's no errors there so far
 	reader->priv->err = NULL;
@@ -471,15 +471,34 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	// catch errors in bus
 	g_signal_connect (bus, "message::error", (GCallback) bus_call, reader);
 
-	if(finish != 0) 
+
+	// FIXME let's try to set state to PAUSED
+	// FIXME There was PLAYING, seeking worked
+	GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PAUSED);
+	// if we have to wait
+	g_message("We have state %i", r);
+	if(r == GST_STATE_CHANGE_ASYNC)
 		{
-			// FIXME let's try to set state to PAUSED
-			GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
-			if(r != GST_STATE_CHANGE_FAILURE)
-			{
-			// FIXME try to get state and work if any error gets issued
-				GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
-			}
+			do {
+			// FIXME could be other states returned, like no preroll, but that's for live streams
+			GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
+			g_message("We have state %i", h);
+			if(h == GST_STATE_CHANGE_SUCCESS)
+				break;
+			} while(1);
+			
+		}
+	else if(r == GST_STATE_CHANGE_FAILURE) {
+		// didn't succeeded in changing state FIXME
+		g_message("Got GST_STATE_CHANGE_FAILURE, something's wrong, can't change state to PAUSED.");
+	}
+	// we should have proper answer to duration query now
+	gint64 len;
+	len = gst_element_query_duration(pipeline, GST_FORMAT_TIME, &len);
+	g_message("Garums %"GST_TIME_FORMAT"\n", GST_TIME_ARGS(len));
+	
+	if(finish != 0) 
+		{	
 			g_message("Doing seeking %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT"\n", start, finish);
 			// do seeking if finish is not zero
 			gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE,
@@ -502,9 +521,6 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 	//g_message("State null");
 	// unref/free all stuff
-
-	gint64 len;
-	gst_element_query_duration (pipeline, GST_FORMAT_TIME, &len);
 	
 	// has to g_source_destroy, as it's attached to non-default context
 	g_source_destroy(source);
@@ -530,7 +546,9 @@ WaveformData * waveform_reader_initial_levels(WaveformReader *reader, const gcha
 	// create WaveformData, add file name,  and return
 	WaveformData *data = waveform_data_new();
 	waveform_data_add(data, reader->priv->readings);
-	waveform_data_set_length((guint64)len);
+	//g_message("sound piece length %"G_GINT64_FORMAT, len);
+	g_message("sound piece length %"G_GINT64_FORMAT, len);
+	waveform_data_set_length(data, (guint64)len);
 	waveform_data_set_file_name(data, file_location);
 	// return pointer to WaveformData
 	return data;

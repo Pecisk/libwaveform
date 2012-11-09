@@ -12,20 +12,20 @@ def on_zoom_out(widget, waveform):
 	print("zoom out")
 
 reader = Waveform.Reader.new()
-data = Waveform.Data.new()
+#data = Waveform.Data.new()
 
 # Try to read 
 try:
-	levels = reader.get_levels("file:///home/peteris/test.wav", 120000000, 0, 0)
+	data = reader.get_initial_levels("file:///home/peteris/test.wav", 120000000, 0, 0)
 except GObject.GError, e:
 	if e.domain == Waveform.ReaderError and e.code == Waveform.ReaderError.FILE:
 		print "File path is wrong, please correct it."
 		sys.exit()
 	
-sublevels = reader.get_levels("file:///home/peteris/test.wav", 40000000, 0, 120000000)	
+#sublevels = reader.get_levels("file:///home/peteris/test.wav", 40000000, 0, 120000000)	
 
-data.add(levels)
-data.add(sublevels)
+#data.add(levels)
+#data.add(sublevels)
 
 win = Gtk.Window()
 win.set_size_request(500, 350)
@@ -49,7 +49,7 @@ shell.pack_start(zoom_box, True, True, 0)
 
 waveform = Waveform.Drawing.new()
 waveform.set_model(data)
-waveform.set_size_request(800,300)
+#waveform.set_size_request(800,300)
 
 scrolwin = Gtk.ScrolledWindow()
 scrolwin.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.ALWAYS)

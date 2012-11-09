@@ -275,7 +275,7 @@ void waveform_data_set_file_name (WaveformData *self, gchar *name) {
 	return;
 }
 
-void waveform_data_get_file_name (WaveformData *self) {
+gchar * waveform_data_get_file_name (WaveformData *self) {
 	// FIXME this function will provide file name which data is stored by WaveformData
 	// FIXME this is temporary solution for passing name from reader to data
 	// FIXME what to do if it has valid file name already?
@@ -294,7 +294,7 @@ void waveform_data_set_length (WaveformData *self, guint64 length) {
 	return;
 }
 
-void waveform_data_get_length (WaveformData *self) {
+guint64 waveform_data_get_length (WaveformData *self) {
 	// FIXME this function will provide file name which data is stored by WaveformData
 	// FIXME this is temporary solution for passing name from reader to data
 	// FIXME what to do if it has valid file name already?

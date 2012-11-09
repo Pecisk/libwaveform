@@ -62,12 +62,12 @@ gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 
 	// set widget size accordingly
 	// first get current height of widget
-	GtkRequisition size_req;
+	GtkRequisition *size_req;
 	gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
-	gint width = waveform_data_get_length(self->priv->data)/(self->priv->zoom_level*1000000000);
+	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req.height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
 	
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;
@@ -83,12 +83,12 @@ gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 	
 	// set widget size accordingly
 	// first get current height of widget
-	GtkRequisition size_req;
+	GtkRequisition *size_req;
 	gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
-	gint width = waveform_data_get_length(self->priv->data)/(self->priv->zoom_level*1000000000);
+	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req.height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
 
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;
@@ -100,12 +100,12 @@ gboolean waveform_drawing_zoom_default(WaveformDrawing *waveform) {
 
 	// set widget size accordingly
 	// first get current height of widget
-	GtkRequisition size_req;
+	GtkRequisition *size_req;
 	gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
-	gint width = waveform_data_get_length(self->priv->data)/(self->priv->zoom_level*1000000000);
+	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req.height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
 	
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;		
@@ -462,11 +462,13 @@ gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_mo
 	
 	// set widget size accordingly
 	// first get current height of widget
-	GtkRequisition size_req;
-	gtk_widget_size_request ((GtkWidget*)self, size_req);
+	//GtkRequisition *size_req;
+	//gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
-	gint width = waveform_data_get_length(self->priv->data)/(self->priv->zoom_level*1000000000);
+	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req.height);
+	g_message("width=length/zoom_evel %i=%lli", width, waveform_data_get_length(self->priv->data));
+	//gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, -1);
 	return TRUE;
 }
