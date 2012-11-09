@@ -35,8 +35,6 @@ struct _WaveformReaderPrivate
   WaveformLevelReading *reading;
   GList *readings;
   GError *err;
-  guint64 length;
-  GstElement *pipeline;
 };
 
 static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data);
@@ -159,10 +157,6 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, void *user_data)
 		case GST_MESSAGE_EOS: {
 			g_message("End of the song.");
 			// write down length of the piece
-			gint64 len;
-			gst_element_query_duration(self->priv->pipeline, GST_FORMAT_TIME, &len);
-			self->priv->length = (guint64)len;
-			g_message("sound #1 %"G_GUINT64_FORMAT" sound #2 %"G_GINT64_FORMAT, self->priv->length, len);
 			g_main_loop_quit(self->priv->loop);
 			break;
 		}
@@ -420,19 +414,19 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 	reader->priv->readings = NULL;
 	
 	GstElement *decoder, *converter, *level_element, *fakesink;
-	//GstElement *pipeline;
+	GstElement *pipeline;
 	GstBus *bus;
 	GSource *source;
 	guint id;
 
-	reader->priv->pipeline = gst_pipeline_new("level-reader-pipeline");
+	pipeline = gst_pipeline_new("level-reader-pipeline");
 	decoder = gst_element_factory_make("uridecodebin","codec-decoder");
 	converter = gst_element_factory_make("audioconvert","audio-converter");
 	level_element = gst_element_factory_make("level","level-element");
 	fakesink = gst_element_factory_make("fakesink", "fake-sink");
 	
 	// return API error about problems with gstreamer core installation
-	if (!reader->priv->pipeline || !decoder || !converter || !level_element || !fakesink) {
+	if (!pipeline || !decoder || !converter || !level_element || !fakesink) {
 		g_printerr ("One element could not be created. Exiting.\n");
 		reader->priv->err = g_error_new(WAVEFORM_READER_ERROR, WAVEFORM_READER_ERROR_NO_ELEMENT, "One of Gstreamer elements necessary for level reading could not be created. Please check your Gstreamer installation.");
 		return NULL;
@@ -451,7 +445,7 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 		g_object_set(G_OBJECT(level_element), "interval", interval, NULL);
 	
 	// add elements to the pipeline
-	gst_bin_add_many (GST_BIN (reader->priv->pipeline), decoder, converter, level_element, fakesink, NULL);
+	gst_bin_add_many (GST_BIN (pipeline), decoder, converter, level_element, fakesink, NULL);
 	//g_message("Elements added");
 	// link elements
 	gst_element_link_many (converter, level_element, fakesink, NULL);
@@ -459,7 +453,7 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 	//g_message("Elements linked");
 	
 	// add watch and callback function bus_call, passing WaveformReader *reader as user_data pointer
-	bus = gst_pipeline_get_bus(GST_PIPELINE(reader->priv->pipeline));
+	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
 
 	// get GSource of bus
 	source = gst_bus_create_watch (bus);
@@ -481,14 +475,14 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 
 	// FIXME let's try to set state to PAUSED
 	// FIXME There was PLAYING, seeking worked
-	GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(reader->priv->pipeline), GST_STATE_PAUSED);
+	GstStateChangeReturn r = gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PAUSED);
 	// if we have to wait
 	g_message("We have state %i", r);
 	if(r == GST_STATE_CHANGE_ASYNC)
 		{
 			do {
 			// FIXME could be other states returned, like no preroll, but that's for live streams
-			GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(reader->priv->pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
+			GstStateChangeReturn h = gst_element_get_state(GST_ELEMENT(pipeline), NULL, NULL, GST_CLOCK_TIME_NONE);
 			g_message("We have state %i", h);
 			if(h == GST_STATE_CHANGE_SUCCESS)
 				break;
@@ -500,9 +494,8 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 		g_message("Got GST_STATE_CHANGE_FAILURE, something's wrong, can't change state to PAUSED.");
 	}
 	// we should have proper answer to duration query now
-	//gint64 len;
+	gint64 len;
 	gst_element_query_duration(pipeline, GST_FORMAT_TIME, &len);
-	//g_message("Garums %"GST_TIME_FORMAT"\n", GST_TIME_ARGS(len));
 	
 	if(finish != 0) 
 		{	
@@ -519,13 +512,13 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
     g_signal_connect (bus, "message::element", (GCallback) bus_call, reader);
 	
 	// playing back pipeline
-	gst_element_set_state(GST_ELEMENT(reader->priv->pipeline), GST_STATE_PLAYING);
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PLAYING);
 
 	// kicking off our custom loop
 	g_main_loop_run(reader->priv->loop);
 	
 	// pausing pipeline
-	gst_element_set_state(GST_ELEMENT(reader->priv->pipeline), GST_STATE_NULL);
+	gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
 	//g_message("State null");
 	// unref/free all stuff
 	
@@ -537,7 +530,7 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 	g_main_context_unref(reader->priv->context);
 
 	gst_object_unref(bus);
-	gst_object_unref(GST_OBJECT(reader->priv->pipeline));
+	gst_object_unref(GST_OBJECT(pipeline));
     //g_message("Business finished");
 	
 	// as we prepended objects, reverse list
@@ -553,8 +546,8 @@ WaveformData * waveform_reader_get_initial_levels(WaveformReader *reader, const 
 	// create WaveformData, add file name,  and return
 	WaveformData *data = waveform_data_new();
 	waveform_data_add(data, reader->priv->readings);
-	g_message("sound piece length %"G_GINT64_FORMAT, reader->priv->length);
-	waveform_data_set_length(data, reader->priv->length);
+	g_message("sound piece length %"G_GINT64_FORMAT, len);
+	waveform_data_set_length(data, (guint64)len);
 	waveform_data_set_file_name(data, file_location);
 	// return pointer to WaveformData
 	return data;
