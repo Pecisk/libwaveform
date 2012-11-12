@@ -465,7 +465,7 @@ gboolean waveform_drawing_set_model(WaveformDrawing *self, WaveformData *data_mo
 	//GtkRequisition *size_req;
 	//gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
-	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
+	guint width = (guint)(((guint)(waveform_data_get_length(self->priv->data)/1000000000))*self->priv->current_zoom_level);
 	// set new size request with caluclated width
 	g_message("width=length/zoom_evel %i=%lli", width, waveform_data_get_length(self->priv->data));
 	//gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
