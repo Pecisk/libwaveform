@@ -16,7 +16,7 @@ reader = Waveform.Reader.new()
 
 # Try to read 
 try:
-	data = reader.get_initial_levels("file:///home/peteris/test.wav", 120000000, 0, 0)
+	data = reader.get_initial_levels("file:///home/peteris/Beautiful.wav", 120000000, 0, 0)
 except GObject.GError, e:
 	if e.domain == Waveform.ReaderError and e.code == Waveform.ReaderError.FILE:
 		print "File path is wrong, please correct it."

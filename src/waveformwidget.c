@@ -62,13 +62,14 @@ gboolean waveform_drawing_zoom_out(WaveformDrawing *waveform) {
 
 	// set widget size accordingly
 	// first get current height of widget
-	GtkRequisition *size_req;
-	gtk_widget_size_request ((GtkWidget*)self, size_req);
+	// FIXME This code sauses segfault, must figure out why - at least for clarity sake
+	// GtkRequisition *size_req;
+	// gtk_widget_get_allocation((GtkWidget*)self, size_req);
+	
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
 	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
-	
+	gtk_widget_set_size_request ((GtkWidget*)self, width, gtk_widget_get_allocated_height((GtkWidget*)self));
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;
 }
@@ -82,13 +83,10 @@ gboolean waveform_drawing_zoom_in(WaveformDrawing *waveform) {
 	g_message("Zoom in: %f", self->priv->current_zoom_level);
 	
 	// set widget size accordingly
-	// first get current height of widget
-	GtkRequisition *size_req;
-	gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
 	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, gtk_widget_get_allocated_height((GtkWidget*)self));
 
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;
@@ -99,13 +97,10 @@ gboolean waveform_drawing_zoom_default(WaveformDrawing *waveform) {
 	self->priv->current_zoom_level = self->priv->default_zoom_level;
 
 	// set widget size accordingly
-	// first get current height of widget
-	GtkRequisition *size_req;
-	gtk_widget_size_request ((GtkWidget*)self, size_req);
 	// calculcate width - it's length of the piece / zoom level (which is in sec, but we need ns, so multiply)
 	gint width = waveform_data_get_length(self->priv->data)/(self->priv->current_zoom_level*1000000000);
 	// set new size request with caluclated width
-	gtk_widget_set_size_request ((GtkWidget*)self, width, size_req->height);
+	gtk_widget_set_size_request ((GtkWidget*)self, width, gtk_widget_get_allocated_height((GtkWidget*)self));
 	
 	gtk_widget_queue_draw((GtkWidget*)waveform);
 	return TRUE;		
@@ -186,17 +181,21 @@ GtkDrawingArea * waveform_drawing_new(void)
 gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
 
 	WaveformDrawing *self = (WaveformDrawing*)widget;
-	GdkRectangle cairoClipArea;
+	GdkRectangle cairoClipArea = {0, 0, 0, 0};
 	gboolean fits = gdk_cairo_get_clip_rectangle(cr, &cairoClipArea);
 	
 	// if waveform isn't showed, don't care to draw it
-	if(fits == FALSE)
+	if(fits == FALSE) {
 		g_message("FALSE");
+		return TRUE;
+	}
 	if(fits == TRUE)
 		g_message("TRUE");
 	gboolean success = waveform_drawing_waveform(widget, cairoClipArea);
+	//return TRUE;
 	cairo_set_source_surface(cr, self->priv->sourceSurface, self->priv->cacheArea.x, self->priv->cacheArea.y);
 	cairo_paint(cr);
+	//cairo_surface_destroy(self->priv->sourceSurface);
 	return TRUE;
 }
 
@@ -215,23 +214,35 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	gtk_widget_get_allocation(widget, &allocatedArea);
 	int width = allocatedArea.width;
 	int height = allocatedArea.height;
-	//g_message("Allocation: %i %i", width, height);
+	g_message("Allocation: %i %i", width, height);
 
 	// We take tripple of exposed area and set it as cached area
-	self->priv->cacheArea.x = cairoClipArea.x - allocatedArea.width;
-	self->priv->cacheArea.y = allocatedArea.y;
-	self->priv->cacheArea.width = allocatedArea.width*3;
+	//self->priv->cacheArea.x = cairoClipArea.x - cairoClipArea.width;
+	// If we are at the beginging, cachedArea.x = 0
+	//if(self->priv->cacheArea.x < 0)
+	//	self->priv->cacheArea.x = 0;
+	//self->priv->cacheArea.y = allocatedArea.y;
+	//g_message("cairoClipArea.width and cairoClipArea.height == %i %i", cairoClipArea.width, cairoClipArea.height);
+	//g_message("cairoClipArea.x and cairoClipArea.y == %i %i", cairoClipArea.x, cairoClipArea.y);
+	// because we need clipped area three times
+	//self->priv->cacheArea.width = cairoClipArea.width*3;
+	self->priv->cacheArea.width = allocatedArea.width;
 	self->priv->cacheArea.height = allocatedArea.height;
+	self->priv->cacheArea.x = allocatedArea.x;
+	self->priv->cacheArea.y = allocatedArea.y;
+	//g_message("self->priv->cacheArea.x and self->priv->cacheArea.y %i %i", self->priv->cacheArea.x, self->priv->cacheArea.y);
+	//g_message("self->priv->cacheArea.width and self->priv->cacheArea.height %i %i", self->priv->cacheArea.width, self->priv->cacheArea.height);
 
+	//return TRUE;
 	// creating new surface to draw on
-	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, self->priv->cacheArea.width, self->priv->cacheArea.height);
+	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, allocatedArea.width, allocatedArea.height);
 	// to draw we need new context
 	cairo_t *context = cairo_create(self->priv->sourceSurface);
 
 	// drawing white background 
 	cairo_set_line_width (context, 2.0);
 	cairo_set_antialias (context, CAIRO_ANTIALIAS_SUBPIXEL);
-	cairo_rectangle(context, 0, 0, self->priv->cacheArea.width, self->priv->cacheArea.height);
+	cairo_rectangle(context, 0, 0, allocatedArea.width, allocatedArea.height);
 
 	const GdkRGBA background_color = {1.0, 1.0, 1.0, 1.0};
 	gdk_cairo_set_source_rgba(context, &background_color);
@@ -438,7 +449,7 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 	cairo_stroke(context);
     // end of if there is data to draw
     }
-	
+	//cairo_destroy(context);
 	return TRUE;
 }
 
