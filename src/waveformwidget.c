@@ -183,7 +183,7 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
 	WaveformDrawing *self = (WaveformDrawing*)widget;
 	GdkRectangle cairoClipArea = {0, 0, 0, 0};
 	gboolean fits = gdk_cairo_get_clip_rectangle(cr, &cairoClipArea);
-	
+	g_message("Cairo Clip: %i %i %i %i", cairoClipArea.x, cairoClipArea.y, cairoClipArea.width, cairoClipArea.height);
 	// if waveform isn't showed, don't care to draw it
 	if(fits == FALSE) {
 		g_message("FALSE");
@@ -191,51 +191,57 @@ gboolean waveform_drawing_draw(GtkWidget *widget, cairo_t *cr) {
 	}
 	if(fits == TRUE)
 		g_message("TRUE");
-	gboolean success = waveform_drawing_waveform(widget, cairoClipArea);
-	//return TRUE;
+		
+	// FIXME check if clip area fits into cacheArea
+	gboolean  success = FALSE;
+	if((cairoClipArea.x < self->priv->cacheArea.x) || (cairoClipArea.x + cairoClipArea.width > self->priv->cacheArea.x + self->priv->cacheArea.width)) {
+		success = waveform_drawing_waveform(widget, cairoClipArea);
+	}
 	cairo_set_source_surface(cr, self->priv->sourceSurface, self->priv->cacheArea.x, self->priv->cacheArea.y);
 	cairo_paint(cr);
-	//cairo_surface_destroy(self->priv->sourceSurface);
 	return TRUE;
 }
 
 gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea)
 {
-	g_message("drawing.");
 	WaveformDrawing *self = WAVEFORM_DRAWING(widget);
 
 	// get allocated dimensions
-	GtkAllocation allocatedArea;
-	allocatedArea.width = 0;
-	allocatedArea.height = 0;
-	allocatedArea.x = 0;
-	allocatedArea.y = 0;
+	GtkAllocation allocatedArea = {0, 0, 0, 0};
 	
 	gtk_widget_get_allocation(widget, &allocatedArea);
 	int width = allocatedArea.width;
 	int height = allocatedArea.height;
-	g_message("Allocation: %i %i", width, height);
+	g_message("Allocation: %i %i %i %i", allocatedArea.x, allocatedArea.y, width, height);
 
+	//// We take tripple of exposed area and set it as cached area
+	//int fake_x = cairoClipArea.x - cairoClipArea.width;
+	//int fake_width = cairoClipArea.width*3;
+	//// If we are at the beginging, cachedArea.x = 0
+	//if(fake_x < 0)
+		//fake_x = 0;
+	//int fake_y = allocatedArea.y;
+	//int fake_height = allocatedArea.height;
+	//g_message("Proposed variables for cache: %i %i %i %i", fake_x, fake_y, fake_width, fake_height);
+	//// FIXME what to do if allocated width is smaller than three times clipped one?
+	
 	// We take tripple of exposed area and set it as cached area
-	//self->priv->cacheArea.x = cairoClipArea.x - cairoClipArea.width;
+	self->priv->cacheArea.x = cairoClipArea.x - cairoClipArea.width;
+	self->priv->cacheArea.width = cairoClipArea.width*3;
 	// If we are at the beginging, cachedArea.x = 0
-	//if(self->priv->cacheArea.x < 0)
-	//	self->priv->cacheArea.x = 0;
-	//self->priv->cacheArea.y = allocatedArea.y;
-	//g_message("cairoClipArea.width and cairoClipArea.height == %i %i", cairoClipArea.width, cairoClipArea.height);
-	//g_message("cairoClipArea.x and cairoClipArea.y == %i %i", cairoClipArea.x, cairoClipArea.y);
-	// because we need clipped area three times
-	//self->priv->cacheArea.width = cairoClipArea.width*3;
-	self->priv->cacheArea.width = allocatedArea.width;
-	self->priv->cacheArea.height = allocatedArea.height;
-	self->priv->cacheArea.x = allocatedArea.x;
+	if(self->priv->cacheArea.x < 0)
+		self->priv->cacheArea.x = 0;
 	self->priv->cacheArea.y = allocatedArea.y;
-	//g_message("self->priv->cacheArea.x and self->priv->cacheArea.y %i %i", self->priv->cacheArea.x, self->priv->cacheArea.y);
-	//g_message("self->priv->cacheArea.width and self->priv->cacheArea.height %i %i", self->priv->cacheArea.width, self->priv->cacheArea.height);
-
-	//return TRUE;
+	self->priv->cacheArea.height = allocatedArea.height;
+	
+	// This is current way *********************************************
+	//self->priv->cacheArea.width = allocatedArea.width;
+	//self->priv->cacheArea.height = allocatedArea.height;
+	//self->priv->cacheArea.x = allocatedArea.x;
+	//self->priv->cacheArea.y = allocatedArea.y;
+	
 	// creating new surface to draw on
-	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, allocatedArea.width, allocatedArea.height);
+	self->priv->sourceSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, self->priv->cacheArea.width, self->priv->cacheArea.height);
 	// to draw we need new context
 	cairo_t *context = cairo_create(self->priv->sourceSurface);
 
@@ -443,13 +449,14 @@ gboolean waveform_drawing_waveform(GtkWidget *widget, GdkRectangle cairoClipArea
 
 	//levels path (on top of the fill)
 	const GdkRGBA drawing_color = {0.2, 0.8, 0.0, 1.0};
-	gdk_cairo_set_source_rgba(context, &drawing_color);
-	cairo_set_line_join(context, CAIRO_LINE_JOIN_ROUND);
-	cairo_set_line_width(context, 2.0);
-	cairo_stroke(context);
+	gdk_cairo_set_source_rgba (context, &drawing_color);
+	cairo_set_line_join (context, CAIRO_LINE_JOIN_ROUND);
+	cairo_set_line_width (context, 2.0);
+	cairo_stroke (context);
     // end of if there is data to draw
     }
-	//cairo_destroy(context);
+    
+    cairo_destroy (context);
 	return TRUE;
 }
 
